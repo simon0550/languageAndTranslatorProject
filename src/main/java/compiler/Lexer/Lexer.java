@@ -42,15 +42,26 @@ public class Lexer {
         }
         // Identifiers or keywords
         if(isLetter(current) || current == '_'){
-            return identifierOrKeyWord();
+            return identifierKeyWordCollection();
         }
-
         nextChar();
         return null;
     }
 
-    private Symbol identifierOrKeyWord(){
-        return null;
+    private Symbol identifierKeyWordCollection(){
+        StringBuilder stringBuilder = new StringBuilder();
+        while (isLetter(current) || isDigit(current) || current == '_'){
+            stringBuilder.append(current);
+            nextChar();
+        }
+        String word = stringBuilder.toString();
+        if(isKeyWord(word)){
+            return new Symbol("KW_" + word.toUpperCase());
+        }
+        if(Character.isUpperCase(current)){
+            return new Symbol("COLLECTION",word);
+        }
+        return new Symbol("IDENTIFIER",word);
     }
 
     private boolean isLetter(int c){
