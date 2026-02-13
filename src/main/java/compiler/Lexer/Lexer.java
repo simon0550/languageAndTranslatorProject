@@ -36,10 +36,36 @@ public class Lexer {
                 while (current != '\n' && current != -1){
                     nextChar();
                 }
+                continue;
             }
             break;
         }
+        // Identifiers or keywords
+        if(isLetter(current) || current == '_'){
+            return identifierOrKeyWord();
+        }
+
         nextChar();
         return null;
+    }
+
+    private Symbol identifierOrKeyWord(){
+        return null;
+    }
+
+    private boolean isLetter(int c){
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+    }
+
+    private boolean isDigit(int c){
+        return (c >= '0' && c <= '9');
+    }
+
+    private boolean isKeyWord(String word){
+        String[] keyWords = {"final", "coll", "def", "for", "while", "if", "else", "return", "not", "ARRAY"};
+        for(String key : keyWords){
+            if(key.equals(word)) return true;
+        }
+        return false;
     }
 }
