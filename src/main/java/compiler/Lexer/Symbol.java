@@ -4,9 +4,9 @@ public class Symbol {
   private String token;
   private Object attribute;
 
-  public Symbol(Object attribute, String token) {
-    this.attribute = attribute;
+  public Symbol(String token, Object attribute) {
     this.token = token;
+    this.attribute = attribute;
   }
 
   public Symbol(String token) {
@@ -18,5 +18,13 @@ public class Symbol {
     if(attribute != null){
       return "<" + token + "," + attribute + ">";
     }else return "<" + token + ">";
+  }
+
+  public Object getAttribute() {
+    return attribute;
+  }
+
+  public String getToken() {
+    return token;
   }
 }
