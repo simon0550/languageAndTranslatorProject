@@ -1,4 +1,6 @@
 package compiler.Lexer;
+import com.sun.tools.jconsole.JConsoleContext;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.util.*;
@@ -91,7 +93,8 @@ public class Lexer {
         if (isKeyWord(word)) {
             return new Symbol("KW_" + word.toUpperCase());
         }
-        if (Character.isUpperCase(current)) {
+
+        if (Character.isUpperCase(word.charAt(0))) {
             last = new Symbol("COLLECTION", word);
             return last;
         }
@@ -104,9 +107,10 @@ public class Lexer {
         if(SYMBOLS.contains(word)) {
             return new Symbol("SYMBOL", word);
         }
+
         System.out.println("Identifiers " + identifiers);
         if(!identifiers.contains(word)) {
-            if(!last.getToken().equals("TYPE")){
+            if(!last.getToken().equals("TYPE") && !last.getToken().equals("COLLECTION")) {
                 throw new IllegalArgumentException(word + " is not declared");
             }
             identifiers.add(word);

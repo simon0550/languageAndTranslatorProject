@@ -124,7 +124,7 @@ public class TestLexer {
 
     @Test
     public void complexTest(){
-        String input = "int test == 2; test == 3";
+        String input = "List<String> test == 2; test == 3";
         List<Symbol> symbols = getAllSymbolsFromString(input);
         System.out.println(symbols);
     }
