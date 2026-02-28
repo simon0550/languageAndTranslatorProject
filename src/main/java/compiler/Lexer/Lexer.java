@@ -1,5 +1,4 @@
 package compiler.Lexer;
-import com.sun.tools.jconsole.JConsoleContext;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -10,29 +9,29 @@ public class Lexer {
     Reader reader;
     private int current;
     private Symbol last;
-    private HashSet<String> identifiers;
 
-    private static final Map<String, String> KEYWORDS = Map.of(
+    private static final Set<String> KEYWORDS_SET = Set.of(
+        "final", "coll", "def", "for", "while", "if", "else", "return", "not", "ARRAY"
+    );
+
+    private static final Map<String, String> UP_KEYWORDS = Map.of(
             "true", "BOOL",
             "false", "BOOL",
-            "final", "MODIFIER",
-            "int", "TYPE",
-            "String", "TYPE",
-            "double", " TYPE",
-            "float", "TYPE"
+            "INT", "TYPE",
+            "STRING", "TYPE",
+            "DOUBLE", " TYPE",
+            "FLOAT", "TYPE",
+            "BOOL", "TYPE"
     );
 
     private static final Set<String> SYMBOLS = Set.of(
-            "+", "-","/","*","%","==","=/=","<",">",">=","<=","(,)",
-            "{,}","[,]",".","&&","||",";",",","="
-
+            "+", "-","/","*","%","==","=/=","<",">",">=","<=","(",")",
+            "{","}","[","]",".","&&","||",";",",","="
     );
-
 
 
     public Lexer(Reader input) {
         this.reader = input;
-        this.identifiers = new HashSet<>();
         this.last = new Symbol("void");
 
         try {
@@ -51,12 +50,10 @@ public class Lexer {
     }
 
 
-
     public Symbol getNextSymbol() {
-        // Handle space, comment and loop
         while (true) {
             if (current == -1) return null;
-            if (current == ' ' || current == '\t' || current == '\n') {
+            if (Character.isWhitespace(current)) {
                 nextChar();
                 continue;
             }
@@ -69,29 +66,41 @@ public class Lexer {
             break;
         }
         // Identifiers or keywords
-        if (isLetter(current) || current == '_' || isSymbol((char) current)) {
+        if (isLetter(current) || current == '_') {
             return identifierKeyWordCollection();
         }
+        // String
         if (current == '"') {
             return string();
         }
-        if (isDigit(current) || current == '.') {
+        // Number
+        if (isDigit(current)) {
             return number();
         }
-        nextChar();
+        // Symbol
+        if(current != -1){
+            return fetchSymbol();
+        }
+
         return null;
     }
 
     private Symbol identifierKeyWordCollection() {
         StringBuilder stringBuilder = new StringBuilder();
-        while (isLetter(current) || isDigit(current) || current == '_' || isSymbol((char) current)) {
+        while (isLetter(current) || isDigit(current) || current == '_') {
             stringBuilder.append((char) current);
             nextChar();
         }
 
         String word = stringBuilder.toString();
-        if (isKeyWord(word)) {
-            return new Symbol("KW_" + word.toUpperCase());
+
+        if(KEYWORDS_SET.contains(word)){
+            last = new Symbol("KW_" + word.toUpperCase(),word);
+        }
+
+        if (UP_KEYWORDS.containsKey(word)) {
+            last = new Symbol(UP_KEYWORDS.get(word), word);
+            return last;
         }
 
         if (Character.isUpperCase(word.charAt(0))) {
@@ -99,31 +108,13 @@ public class Lexer {
             return last;
         }
 
-        if(KEYWORDS.containsKey(word)) {
-            last = new Symbol(KEYWORDS.get(word), word);
-            return last;
-        }
-
-        if(SYMBOLS.contains(word)) {
-            return new Symbol("SYMBOL", word);
-        }
-
-        System.out.println("Identifiers " + identifiers);
-        if(!identifiers.contains(word)) {
-            if(!last.getToken().equals("TYPE") && !last.getToken().equals("COLLECTION")) {
-                throw new IllegalArgumentException(word + " is not declared");
-            }
-            identifiers.add(word);
-        }
-
         last = new Symbol("IDENTIFIER", word);
         return last;
 
-
     }
 
-    private boolean isSymbol(char word) {
-        return SYMBOLS.contains(String.valueOf(word));
+    private Symbol fetchSymbol(){
+        return null;
     }
 
     private boolean isLetter(int c) {
@@ -132,14 +123,6 @@ public class Lexer {
 
     private boolean isDigit(int c) {
         return (c >= '0' && c <= '9');
-    }
-
-    private boolean isKeyWord(String word) {
-        String[] keyWords = {"final", "coll", "def", "for", "while", "if", "else", "return", "not", "ARRAY"};
-        for (String key : keyWords) {
-            if (key.equals(word)) return true;
-        }
-        return false;
     }
 
     public Symbol number() {
@@ -151,7 +134,6 @@ public class Lexer {
         }
 
         while (isDigit(current) || current == '.') {
-
             if (current == '.') {
                 if (isFloat) {
                     throw new NumberFormatException("Multiple .");
@@ -177,17 +159,14 @@ public class Lexer {
 
     public Symbol string() {
         StringBuilder stringBuilder = new StringBuilder();
+        nextChar();
 
-        if (current == '"') {
-            nextChar();
-        }
-
-        while (current != '"' && current != '\0') {
+        while (current != '"' && current != -1) {
             stringBuilder.append((char) current);
             nextChar();
         }
 
-        if (current == '\0') {
+        if (current == -1) {
             throw new RuntimeException("Syntax error");
         }
         nextChar();

@@ -34,7 +34,7 @@ public class TestLexer {
 
     @Test
     public void test() {
-        String input = "var x int = 2;";
+        String input = "int x int = 2;";
         StringReader reader = new StringReader(input);
         Lexer lexer = new Lexer(reader);
         assertNotNull(lexer.getNextSymbol());
@@ -93,7 +93,7 @@ public class TestLexer {
 
     @Test
     public void testNumberFloat2() {
-        String input = ".56";
+        String input = "int x = .56";
         Lexer lexer = new Lexer(new StringReader(input));
 
         Symbol symbol = lexer.getNextSymbol();
