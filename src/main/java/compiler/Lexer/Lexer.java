@@ -19,7 +19,7 @@ public class Lexer {
             "false", "BOOL",
             "INT", "TYPE",
             "STRING", "TYPE",
-            "DOUBLE", " TYPE",
+            "DOUBLE", "TYPE",
             "FLOAT", "TYPE",
             "BOOL", "TYPE"
     );
@@ -96,6 +96,7 @@ public class Lexer {
 
         if(KEYWORDS_SET.contains(word)){
             last = new Symbol("KW_" + word.toUpperCase(),word);
+            return last;
         }
 
         if (UP_KEYWORDS.containsKey(word)) {
@@ -113,8 +114,48 @@ public class Lexer {
 
     }
 
-    private Symbol fetchSymbol(){
-        return null;
+    private Symbol fetchSymbol() {
+        StringBuilder sb = new StringBuilder();
+        char first = (char) current;
+        sb.append(first);
+        nextChar();
+
+        if (first == '=') {
+            // == case
+            if (current == '=') {
+                sb.append((char) current);
+                nextChar();
+                // =/= case
+            } else if (current == '/') {
+                sb.append((char) current);
+                nextChar();
+                if (current == '=') {
+                    sb.append((char) current);
+                    nextChar();
+                }
+            }
+        } else if (first == '<' || first == '>') {
+            if (current == '=') {
+                sb.append((char) current);
+                nextChar();
+            }
+            // && case
+        } else if (first == '&' && current == '&') {
+            sb.append((char) current);
+            nextChar();
+            // || case
+        } else if (first == '|' && current == '|') {
+            sb.append((char) current);
+            nextChar();
+        }
+
+        String result = sb.toString();
+        if (SYMBOLS.contains(result)) {
+            last = new Symbol("SYMBOL", result);
+            return last;
+        }
+
+        throw new IllegalArgumentException("Symbole inconnu : " + result);
     }
 
     private boolean isLetter(int c) {
