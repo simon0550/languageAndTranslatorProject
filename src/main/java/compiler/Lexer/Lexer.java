@@ -26,7 +26,7 @@ public class Lexer {
 
     private static final Set<String> SYMBOLS = Set.of(
             "+", "-","/","*","%","==","=/=","<",">",">=","<=","(",")",
-            "{","}","[","]",".","&&","||",";",",","="
+            "{","}","[","]",".","&&","||",";",",","=","->"
     );
 
 
@@ -37,7 +37,7 @@ public class Lexer {
         try {
             this.current = reader.read();
         } catch (IOException e) {
-            e.toString();
+            System.err.println(e.getMessage());
         }
     }
 
@@ -45,7 +45,7 @@ public class Lexer {
         try {
             this.current = reader.read();
         } catch (IOException e) {
-            e.toString();
+            System.err.println(e.getMessage());
         }
     }
 
@@ -74,7 +74,7 @@ public class Lexer {
             return string();
         }
         // Number
-        if (isDigit(current)) {
+        if (isDigit(current) || current == '.') {
             return number();
         }
         // Symbol
@@ -121,11 +121,9 @@ public class Lexer {
         nextChar();
 
         if (first == '=') {
-            // == case
             if (current == '=') {
                 sb.append((char) current);
                 nextChar();
-                // =/= case
             } else if (current == '/') {
                 sb.append((char) current);
                 nextChar();
@@ -139,11 +137,14 @@ public class Lexer {
                 sb.append((char) current);
                 nextChar();
             }
-            // && case
+        } else if (first == '-') {
+            if (current == '>') {
+                sb.append((char) current);
+                nextChar();
+            }
         } else if (first == '&' && current == '&') {
             sb.append((char) current);
             nextChar();
-            // || case
         } else if (first == '|' && current == '|') {
             sb.append((char) current);
             nextChar();
@@ -169,10 +170,6 @@ public class Lexer {
     public Symbol number() {
         boolean isFloat = false;
         StringBuilder stringBuilder = new StringBuilder();
-
-        while (current == '0') {
-            nextChar();
-        }
 
         while (isDigit(current) || current == '.') {
             if (current == '.') {
