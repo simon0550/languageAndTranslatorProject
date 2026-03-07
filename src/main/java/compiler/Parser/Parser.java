@@ -13,7 +13,7 @@ public class Parser {
     this.lexer = lexer;
   }
 
-  public Node getAst(){
+  public Node getAST(){
     return null;
   }
 }
