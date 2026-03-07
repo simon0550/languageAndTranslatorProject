@@ -1,14 +1,14 @@
 package compiler.Parser;
 
 public class IdNode implements Node{
-  private String value;
+  private String name;
 
-  public IdNode(String value) {
-    this.value = value;
+  public IdNode(String name) {
+    this.name = name;
   }
 
   @Override
   public String toString() {
-    return "Identifier, " + value;
+    return "Identifier, " + name;
   }
 }
