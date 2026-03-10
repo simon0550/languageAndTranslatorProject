@@ -10,6 +10,14 @@ public class WhileNode extends Node{
   }
 
   public String toString(){
-    return "";
+    StringBuilder sb = new StringBuilder();
+
+    sb.append("WhileLoop\n");
+    sb.append(condition.toString()).append("\n");
+
+    sb.append("Do\n");
+    sb.append(codeInNode.toString());
+
+    return sb.toString();
   }
 }

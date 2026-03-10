@@ -13,6 +13,20 @@ public class IfNode extends Node{
 
   @Override
   public String toString(){
-    return "";
+    StringBuilder sb = new StringBuilder();
+
+    sb.append("IfCondition\n");
+    sb.append(condition.toString()).append("\n");
+
+    sb.append("Then\n");
+    sb.append(thenCaseBlock.toString());
+
+    // On n'ajoute le bloc Else que s'il n'est pas vide
+    if (!(elseCaseBlock instanceof EmptyNode)) {
+      sb.append("\nElse\n");
+      sb.append(elseCaseBlock.toString());
+    }
+
+    return sb.toString();
   }
 }
