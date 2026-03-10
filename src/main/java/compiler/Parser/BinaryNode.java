@@ -1,6 +1,6 @@
 package compiler.Parser;
 
-public class BinaryNode implements Node {
+public class BinaryNode extends Node {
   private String operator;
   private Node left;
   private Node right;

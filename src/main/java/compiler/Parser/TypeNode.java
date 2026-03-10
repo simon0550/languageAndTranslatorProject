@@ -1,6 +1,6 @@
 package compiler.Parser;
 
-public class TypeNode implements Node{
+public class TypeNode extends Node{
 
   private String type;
 

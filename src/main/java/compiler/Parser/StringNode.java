@@ -1,6 +1,6 @@
 package compiler.Parser;
 
-public class StringNode implements Node {
+public class StringNode extends Node {
 
   private String content;
 

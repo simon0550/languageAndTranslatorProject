@@ -1,6 +1,6 @@
 package compiler.Parser;
 
-public class IdNode implements Node{
+public class IdNode extends Node{
   private String name;
 
   public IdNode(String name) {

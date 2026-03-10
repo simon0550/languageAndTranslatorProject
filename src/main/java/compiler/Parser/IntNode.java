@@ -1,10 +1,10 @@
 package compiler.Parser;
 
-public class IntNode implements Node{
+public class IntNode extends Node{
 
-  private String value;
+  private int value;
 
-  public IntNode(String value) {
+  public IntNode(int value) {
     this.value = value;
   }
 

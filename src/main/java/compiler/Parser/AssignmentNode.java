@@ -1,9 +1,9 @@
 package compiler.Parser;
 
-public class AssignmentNode implements Node {
-  private Node type;       // TypeNode
-  private Node identifier; // IdentifierNode
-  private Node expression; // Le BinaryOpNode ou autre valeur
+public class AssignmentNode extends Node {
+  private Node type;       
+  private Node identifier; 
+  private Node expression; 
 
   public AssignmentNode(Node type, Node identifier, Node expression) {
     this.type = type;
@@ -13,7 +13,6 @@ public class AssignmentNode implements Node {
 
   @Override
   public String toString() {
-    // Ordre infixe avec le marqueur Expr au début
     return "Expr\n" +
         type.toString() + "\n" +
         identifier.toString() + "\n" +

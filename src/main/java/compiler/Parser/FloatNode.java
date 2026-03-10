@@ -1,10 +1,10 @@
 package compiler.Parser;
 
-public class FloatNode implements Node{
+public class FloatNode extends Node{
 
-  private String value;
+  private float value;
 
-  public FloatNode(String value) {
+  public FloatNode(float value) {
     this.value = value;
   }
 
