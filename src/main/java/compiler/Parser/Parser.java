@@ -12,62 +12,86 @@ public class Parser {
 
   public Parser(Lexer lexer) {
     this.lexer = lexer;
-    this.symbol = lexer.getNextSymbol();
-  }
-
-  public Node getAST() {
-    // Si on voit un type (int, float...), on traite une déclaration
-    List<Node> instructions = new ArrayList<>();
-    while (this.symbol != null){
-      instructions.add(parse());
-      step();
-    }
-    return new ProgramNode(instructions);
-    
-  
-  }
-
-  private Node parse(){
-    // here, we have to put all our parser rules 
-    if (this.symbol.getToken().equals("type")){
-      return parseVariableDeclaration(this.symbol);
-    }
-    else return new EmptyNode();
-
-  }
-
-  // This only manges varible declaration and the values associated
-  public Node parseVariableDeclaration(Symbol symbol){
-    String type = symbol.getToken();
     step();
-    String identifier = this.symbol.getToken();
-    step();
-    String assignmentOperator = this.symbol.getToken(); 
-    if(!assignmentOperator.equals("="))
-      throw new RuntimeException("Syntax error: expected '=' after variable name");
-    step();
-    Node expression = parseExpression(type);
-    return null;
-  } 
-
-  private Node parseExpression(String type) {
-    if(type.equals ("int")){
-      int value = Integer.parseInt(this.symbol.getAttribute().toString());
-      return new IntNode(value);
-    } else if (type.equals("float")){
-      float value = Float.parseFloat(this.symbol.getAttribute().toString());
-      return new FloatNode(value);
-    } else if (type.equals("bool")){
-      boolean value = Boolean.parseBoolean(this.symbol.getAttribute().toString());
-      return new BoolNode(value);
-    }
-    return new EmptyNode();
-    
   }
 
   public void step(){
     this.symbol = lexer.getNextSymbol();
   }
 
+  public Node getAST() {
+    List<Node> instructions = new ArrayList<>();
+    while (this.symbol != null){
+      instructions.add(parse());
+      step();
+    }
+    return new ProgramNode(instructions);
+  }
+
+  private String consumeToken(String expectedToken) {
+    if (symbol != null && symbol.getToken().equals(expectedToken)) {
+      String output = (symbol.getAttribute() != null) ? symbol.getAttribute().toString() : "";
+      step();
+      return output;
+    }
+    throw new RuntimeException("Syntax Error");
+  }
+
+
+  private Node parse(){
+    String token = symbol.getToken();
+
+    if (token.equals("TYPE")) {
+      return parseDeclaration();
+    }
+
+    else if (token.equals("SYMBOL") && symbol.getAttribute().equals("{")) {
+      return parseBlock();
+    }
+
+    else if (token.equals("KW_IF")) {
+      return parseIf();
+    }
+
+    else if (token.equals("KW_WHILE")) {
+      return parseWhile();
+    }
+
+    else if (token.equals("IDENTIFIER")) {
+      return parseAssignment();
+    }
+
+    if (token.equals("SYMBOL") && symbol.getAttribute().equals(";")) {
+      step();
+      return new EmptyNode();
+    }
+
+    throw new RuntimeException("Syntax Error");
+  }
+
+
+  public Node parseDeclaration(){
+    return null;
+  }
+
+  private Node parseBlock(){
+    return null;
+  }
+
+  private Node parseIf(){
+    return null;
+  }
+
+  private Node parseWhile(){
+    return null;
+  }
+
+  private Node parseAssignment(){
+    return null;
+  }
+
+  private Node parseExpression() {
+    return null;
+  }
 
 }
