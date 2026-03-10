@@ -6,7 +6,6 @@ public class BoolNode extends Node {
         this.value = value;
     }
 
- 
     @Override
     public String toString() {
         return "Bool, " + value;

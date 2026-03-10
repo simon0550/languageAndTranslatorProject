@@ -14,7 +14,6 @@ public class TestParser {
     Parser parser = new Parser(firstSymbol, lexer);
     Node ast = parser.getAST();
 
-    // 6. Afficher le résultat !
     System.out.println("AST Résultat :");
     System.out.println(ast.toString());
   }

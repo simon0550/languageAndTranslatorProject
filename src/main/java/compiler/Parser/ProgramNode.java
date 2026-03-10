@@ -9,4 +9,15 @@ public class ProgramNode extends Node {
     public ProgramNode(List<Node> declarations) {
         this.declarations = declarations;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (Node n : declarations) {
+            if (n != null) {
+                sb.append(n).append("\n");
+            }
+        }
+        return sb.toString().trim();
+    }
 }

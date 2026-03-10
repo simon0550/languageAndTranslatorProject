@@ -1,10 +1,9 @@
 package compiler.Parser;
 
-public class EmptyNode extends Node{
+public class EmptyNode extends Node {
 
-
-  public EmptyNode(){
-
+  @Override
+  public String toString() {
+    return "";
   }
-
 }

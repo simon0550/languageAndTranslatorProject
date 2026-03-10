@@ -5,17 +5,14 @@ import java.util.List;
 
 import compiler.Lexer.Lexer;
 import compiler.Lexer.Symbol;
-import compiler.Parser.IntNode;
-import compiler.Parser.StringNode;
-import compiler.Parser.ProgramNode;
 public class Parser {
 
   private Lexer lexer;
   private Symbol symbol;
 
-  public Parser(Symbol symbol, Lexer lexer) {
-    this.symbol = symbol;
+  public Parser(Lexer lexer) {
     this.lexer = lexer;
+    this.symbol = lexer.getNextSymbol();
   }
 
   public Node getAST() {
@@ -50,7 +47,7 @@ public class Parser {
       throw new RuntimeException("Syntax error: expected '=' after variable name");
     step();
     Node expression = parseExpression(type);
-    return new VariableDeclarationNode(type, identifier, expression);
+    return null;
   } 
 
   private Node parseExpression(String type) {
@@ -67,9 +64,6 @@ public class Parser {
     return new EmptyNode();
     
   }
-
-
-  
 
   public void step(){
     this.symbol = lexer.getNextSymbol();
