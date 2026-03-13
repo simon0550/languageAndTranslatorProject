@@ -74,7 +74,7 @@ public class Parser {
       return new EmptyNode();
     }
 
-    throw new RuntimeException("Syntax Error");
+    throw new RuntimeException("Error");
   }
 
 
@@ -96,7 +96,19 @@ public class Parser {
   }
 
   private Node parseIf(){
-    return null;
+    consumeToken("KW_IF");
+    consumeSymbol("(");
+    Node ifCondition = parseExpression();
+    consumeSymbol(")");
+
+    Node thenLocalBlock = parse();
+    Node elseLocalBlock = null;
+
+    if(symbol != null && symbol.getToken().equals("KW_ELSE")){
+      consumeToken("KW_ELSE");
+      elseLocalBlock = parse();
+    }
+    return new IfNode(ifCondition,thenLocalBlock,elseLocalBlock);
   }
 
   private Node parseWhile(){
@@ -108,6 +120,24 @@ public class Parser {
   }
 
   private Node parseExpression() {
+    return parseOrExpression();
+  }
+
+  // Less priority than And ?
+  private Node parseOrExpression(){
+    return null;
+  }
+
+  // Less priority than Add ?
+  private Node parseAndExpression(){
+    return null;
+  }
+
+  private Node parseAdd(){
+    return null;
+  }
+
+  private Node parseMul(){
     return null;
   }
 
