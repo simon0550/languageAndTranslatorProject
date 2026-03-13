@@ -34,7 +34,15 @@ public class Parser {
       step();
       return output;
     }
-    throw new RuntimeException("Syntax Error");
+    throw new RuntimeException();
+  }
+
+  private void consumeSymbol(String expectedSymbol) {
+    if (symbol != null && symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals(expectedSymbol)) {
+      step();
+    }else{
+      throw new RuntimeException();
+    }
   }
 
 
@@ -42,7 +50,7 @@ public class Parser {
     String token = symbol.getToken();
 
     if (token.equals("TYPE")) {
-      return parseDeclaration();
+      return parseDeclarationType();
     }
 
     else if (token.equals("SYMBOL") && symbol.getAttribute().equals("{")) {
@@ -70,8 +78,17 @@ public class Parser {
   }
 
 
-  public Node parseDeclaration(){
-    return null;
+  public Node parseDeclarationType(){
+    String typeString = consumeToken("TYPE");
+    Node newTypeNode = new TypeNode(typeString);
+
+    String identifier = consumeToken("IDENTIFIER");
+    Node newIdNode = new IdNode(identifier);
+
+    consumeSymbol("=");
+    Node valueAttributed = parseExpression();
+    consumeSymbol(";");
+    return new AssignmentNode(newTypeNode,newIdNode,valueAttributed);
   }
 
   private Node parseBlock(){

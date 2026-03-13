@@ -10,8 +10,7 @@ public class TestParser {
     String code = "int i = 3;";
     Reader reader = new StringReader(code);
     Lexer lexer = new Lexer(reader);
-    Symbol firstSymbol = lexer.getNextSymbol();
-    Parser parser = new Parser(firstSymbol, lexer);
+    Parser parser = new Parser(lexer);
     Node ast = parser.getAST();
 
     System.out.println("AST Résultat :");
