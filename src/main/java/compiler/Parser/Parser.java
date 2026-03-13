@@ -15,9 +15,11 @@ public class Parser {
     step();
   }
 
+
   public void step(){
     this.symbol = lexer.getNextSymbol();
   }
+
 
   public Node getAST() {
     List<Node> instructions = new ArrayList<>();
@@ -28,6 +30,7 @@ public class Parser {
     return new ProgramNode(instructions);
   }
 
+
   private String consumeToken(String expectedToken) {
     if (symbol != null && symbol.getToken().equals(expectedToken)) {
       String output = (symbol.getAttribute() != null) ? symbol.getAttribute().toString() : "";
@@ -36,6 +39,7 @@ public class Parser {
     }
     throw new RuntimeException();
   }
+
 
   private void consumeSymbol(String expectedSymbol) {
     if (symbol != null && symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals(expectedSymbol)) {
@@ -91,9 +95,19 @@ public class Parser {
     return new AssignmentNode(newTypeNode,newIdNode,valueAttributed);
   }
 
+
   private Node parseBlock(){
-    return null;
+    consumeSymbol("{");
+    LocalBlockNode localBlockNode = new LocalBlockNode();
+    // While we stay in the local block, we add in the list
+    while (symbol != null && !(symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals("}"))){
+      Node parseBlock = parse();
+      if(parseBlock != null) localBlockNode.AddLocalNode(parseBlock);
+    }
+    consumeSymbol("}");
+    return localBlockNode;
   }
+
 
   private Node parseIf(){
     consumeToken("KW_IF");
@@ -111,31 +125,38 @@ public class Parser {
     return new IfNode(ifCondition,thenLocalBlock,elseLocalBlock);
   }
 
+
   private Node parseWhile(){
     return null;
   }
+
 
   private Node parseAssignment(){
     return null;
   }
 
+
   private Node parseExpression() {
     return parseOrExpression();
   }
+
 
   // Less priority than And ?
   private Node parseOrExpression(){
     return null;
   }
 
+
   // Less priority than Add ?
   private Node parseAndExpression(){
     return null;
   }
 
+
   private Node parseAdd(){
     return null;
   }
+
 
   private Node parseMul(){
     return null;
