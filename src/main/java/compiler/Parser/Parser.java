@@ -87,7 +87,7 @@ public class Parser {
     return endAssignment(new TypeNode(typeString));
   }
 
-
+  // Case of x = 10;
   private Node parseAssignment(){
     return endAssignment(new EmptyNode());
   }
@@ -144,30 +144,51 @@ public class Parser {
     return new WhileNode(whileCondition,whileBody);
   }
 
+  // Use of priority
 
   private Node parseExpression() {
     return parseOrExpression();
   }
 
-
-  // Less priority than And ?
+  // Less priority than And (||)
   private Node parseOrExpression(){
-    return null;
+    Node firstPartNode = parseAndExpression();
+    while (symbol != null && symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals("||")){
+      String attributeOperation = symbol.getAttribute().toString();
+      step();
+      Node secondPartNode = parseAndExpression();
+      firstPartNode = new BinaryNode(attributeOperation,firstPartNode,secondPartNode);
+    }
+    return firstPartNode;
   }
 
-
-  // Less priority than Add ?
+  // Less priority than Equality (&&)
   private Node parseAndExpression(){
     return null;
   }
 
+  // Less priority than Relational (==,=/=)
+  private Node parseEquality(){
+    return null;
+  }
 
+  // Less priority than Add (<,>,<=,>=)
+  private Node Relational(){
+    return null;
+  }
+
+  // Less priority than Mul (+/-)
   private Node parseAdd(){
     return null;
   }
 
-
+  // Less priority than Primary
   private Node parseMul(){
+    return null;
+  }
+
+  // The most priority
+  private Node parseFinalSymbol(){
     return null;
   }
 
