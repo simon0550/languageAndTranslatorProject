@@ -2,9 +2,9 @@ package compiler.Parser;
 
 public class IntNode extends Node{
 
-  private int value;
+  private String value;
 
-  public IntNode(int value) {
+  public IntNode(String value) {
     this.value = value;
   }
 

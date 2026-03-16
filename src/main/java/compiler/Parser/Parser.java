@@ -173,7 +173,7 @@ public class Parser {
   }
 
   // Less priority than Add (<,>,<=,>=)
-  private Node Relational(){
+  private Node parseRelational(){
     return null;
   }
 
@@ -189,7 +189,26 @@ public class Parser {
 
   // The most priority
   private Node parseFinalSymbol(){
-    return null;
+    String token = symbol.getToken();
+
+    if (token.equals("NUMBER")) {
+      String val = consumeToken("NUMBER");
+      return new IntNode(val);
+    }
+    else if (token.equals("FLOAT")) {
+      String val = consumeToken("FLOAT");
+      return new FloatNode(val);
+    }
+    else if (token.equals("BOOL")) {
+      String val = consumeToken("BOOL");
+      return new BoolNode(Boolean.parseBoolean(val));
+    }
+    else if (token.equals("STRING")) {
+      String val = consumeToken("STRING");
+      return new StringNode(val);
+    }
+
+    throw new RuntimeException();
   }
 
 }
