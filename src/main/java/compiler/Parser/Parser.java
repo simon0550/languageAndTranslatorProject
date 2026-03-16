@@ -81,18 +81,26 @@ public class Parser {
     throw new RuntimeException("Error");
   }
 
-
+  // Case of INT x = 5;
   public Node parseDeclarationType(){
     String typeString = consumeToken("TYPE");
-    Node newTypeNode = new TypeNode(typeString);
+    return endAssignment(new TypeNode(typeString));
+  }
 
+
+  private Node parseAssignment(){
+    return endAssignment(new EmptyNode());
+  }
+
+  private Node endAssignment(Node typeNode){
     String identifier = consumeToken("IDENTIFIER");
     Node newIdNode = new IdNode(identifier);
 
     consumeSymbol("=");
     Node valueAttributed = parseExpression();
     consumeSymbol(";");
-    return new AssignmentNode(newTypeNode,newIdNode,valueAttributed);
+
+    return new AssignmentNode(typeNode, newIdNode, valueAttributed);
   }
 
 
@@ -116,7 +124,7 @@ public class Parser {
     consumeSymbol(")");
 
     Node thenLocalBlock = parse();
-    Node elseLocalBlock = null;
+    Node elseLocalBlock = new EmptyNode();
 
     if(symbol != null && symbol.getToken().equals("KW_ELSE")){
       consumeToken("KW_ELSE");
@@ -127,12 +135,13 @@ public class Parser {
 
 
   private Node parseWhile(){
-    return null;
-  }
+    consumeToken("KW_WHILE");
+    consumeSymbol("(");
+    Node whileCondition = parseExpression();
+    consumeSymbol(")");
 
-
-  private Node parseAssignment(){
-    return null;
+    Node whileBody = parse();
+    return new WhileNode(whileCondition,whileBody);
   }
 
 
