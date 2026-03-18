@@ -144,7 +144,6 @@ public class Parser {
   }
 
   // Use of priority
-
   private Node parseExpression() {
     return parseOrExpression();
   }
@@ -163,26 +162,49 @@ public class Parser {
 
   // Less priority than Equality (&&)
   private Node parseAndExpression(){
-    return parseEquality();
+    Node firstPartNode = parseEqualityExpression();
+    while (symbol != null && symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals("&&")){
+      String attributeOperation = symbol.getAttribute().toString();
+      step();
+      Node secondPartNode = parseEqualityExpression();
+      firstPartNode = new BinaryNode(attributeOperation,firstPartNode,secondPartNode);
+    }
+    return firstPartNode;
   }
 
   // Less priority than Relational (==,=/=)
-  private Node parseEquality(){
-    return parseRelational();
+  private Node parseEqualityExpression(){
+    Node firstPartNode = parseRelationalExpression();
+    while (symbol != null && symbol.getToken().equals("SYMBOL")
+        && symbol.getAttribute().equals("==") || symbol.getAttribute().equals("=/=")){
+      String attributeOperation = symbol.getAttribute().toString();
+      step();
+      Node secondPartNode = parseRelationalExpression();
+      firstPartNode = new BinaryNode(attributeOperation,firstPartNode,secondPartNode);
+    }
+    return firstPartNode;
   }
 
   // Less priority than Add (<,>,<=,>=)
-  private Node parseRelational(){
-    return parseAdd();
+  private Node parseRelationalExpression(){
+    return parseAddExpression();
   }
 
   // Less priority than Mul (+/-)
-  private Node parseAdd(){
-    return parseMul();
+  private Node parseAddExpression(){
+    Node firstPartNode = parseMulExpression();
+    while (symbol != null && symbol.getToken().equals("SYMBOL") &&
+        (symbol.getAttribute().equals("+") || symbol.getAttribute().equals("-"))) {
+      String op = symbol.getAttribute().toString();
+      step();
+      Node secondPartNode = parseMulExpression();
+      firstPartNode = new BinaryNode(op, firstPartNode, secondPartNode);
+    }
+    return firstPartNode;
   }
 
   // Less priority than Primary
-  private Node parseMul(){
+  private Node parseMulExpression(){
     return parseFinalSymbol();
   }
 

@@ -1,5 +1,4 @@
 import compiler.Lexer.Lexer;
-import compiler.Lexer.Symbol;
 import compiler.Parser.Node;
 import compiler.Parser.Parser;
 import java.io.Reader;
