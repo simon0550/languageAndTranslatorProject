@@ -187,7 +187,16 @@ public class Parser {
 
   // Less priority than Add (<,>,<=,>=)
   private Node parseRelationalExpression(){
-    return parseAddExpression();
+    Node firstPartNode = parseAddExpression();
+    while (symbol != null && symbol.getToken().equals("SYMBOL") &&
+        (symbol.getAttribute().equals("<") || symbol.getAttribute().equals(">") ||
+            symbol.getAttribute().equals("<=") || symbol.getAttribute().equals(">="))) {
+      String attributeOperation = symbol.getAttribute().toString();
+      step();
+      Node secondPartNode = parseAddExpression();
+      firstPartNode = new BinaryNode(attributeOperation, firstPartNode, secondPartNode);
+    }
+    return firstPartNode;
   }
 
   // Less priority than Mul (+/-)
@@ -195,41 +204,51 @@ public class Parser {
     Node firstPartNode = parseMulExpression();
     while (symbol != null && symbol.getToken().equals("SYMBOL") &&
         (symbol.getAttribute().equals("+") || symbol.getAttribute().equals("-"))) {
-      String op = symbol.getAttribute().toString();
+      String attributeOperation = symbol.getAttribute().toString();
       step();
       Node secondPartNode = parseMulExpression();
-      firstPartNode = new BinaryNode(op, firstPartNode, secondPartNode);
+      firstPartNode = new BinaryNode(attributeOperation, firstPartNode, secondPartNode);
     }
     return firstPartNode;
   }
 
   // Less priority than Primary
   private Node parseMulExpression(){
-    return parseFinalSymbol();
+    Node firstPartNode = parseFinalSymbol();
+    while (symbol != null && symbol.getToken().equals("SYMBOL") &&
+        (symbol.getAttribute().equals("*") || symbol.getAttribute().equals("/")
+            || symbol.getAttribute().equals("%"))) {
+      String attributeOperation = symbol.getAttribute().toString();
+      step();
+      Node secondPartNode = parseFinalSymbol();
+      firstPartNode = new BinaryNode(attributeOperation, firstPartNode, secondPartNode);
+    }
+    return firstPartNode;
   }
 
   // The most priority
   private Node parseFinalSymbol(){
     String token = symbol.getToken();
 
+    if (token.equals("IDENTIFIER")) {
+      return new IdNode(consumeToken("IDENTIFIER"));
+    }
+
     if (token.equals("NUMBER")) {
-      String val = consumeToken("NUMBER");
-      return new IntNode(val);
+      return new IntNode(consumeToken("NUMBER"));
     }
     else if (token.equals("FLOAT")) {
-      String val = consumeToken("FLOAT");
-      return new FloatNode(val);
+      return new FloatNode(consumeToken("FLOAT"));
     }
     else if (token.equals("BOOL")) {
       String val = consumeToken("BOOL");
       return new BoolNode(Boolean.parseBoolean(val));
     }
     else if (token.equals("STRING")) {
-      String val = consumeToken("STRING");
-      return new StringNode(val);
+      return new StringNode(consumeToken("STRING"));
     }
 
-    throw new RuntimeException();
+    throw new RuntimeException("ParseFinalSymbol error");
   }
 
 }
