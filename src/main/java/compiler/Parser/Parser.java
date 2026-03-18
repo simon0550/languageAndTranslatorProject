@@ -25,7 +25,6 @@ public class Parser {
     List<Node> instructions = new ArrayList<>();
     while (this.symbol != null){
       instructions.add(parse());
-      step();
     }
     return new ProgramNode(instructions);
   }
@@ -164,27 +163,27 @@ public class Parser {
 
   // Less priority than Equality (&&)
   private Node parseAndExpression(){
-    return null;
+    return parseEquality();
   }
 
   // Less priority than Relational (==,=/=)
   private Node parseEquality(){
-    return null;
+    return parseRelational();
   }
 
   // Less priority than Add (<,>,<=,>=)
   private Node parseRelational(){
-    return null;
+    return parseAdd();
   }
 
   // Less priority than Mul (+/-)
   private Node parseAdd(){
-    return null;
+    return parseMul();
   }
 
   // Less priority than Primary
   private Node parseMul(){
-    return null;
+    return parseFinalSymbol();
   }
 
   // The most priority
