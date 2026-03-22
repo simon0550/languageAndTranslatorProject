@@ -94,7 +94,8 @@ public class Lexer {
 
         String word = stringBuilder.toString();
 
-        if(KEYWORDS_SET.contains(word)){
+        if(KEYWORDS_SET.contains(word.toLowerCase())){
+
             last = new Symbol("KW_" + word.toUpperCase(),word);
             return last;
         }

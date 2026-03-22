@@ -36,6 +36,7 @@ public class Parser {
       step();
       return output;
     }
+    System.out.println("Exception on expected " + expectedToken + "Symbol token : "+ symbol.getToken());
     throw new RuntimeException();
   }
 
@@ -67,33 +68,83 @@ public class Parser {
     else if (token.equals("KW_WHILE")) {
       return parseWhile();
     }
+    else if (token.equals("KW_RETURN")){
+      return parseReturn();
+    }
 
     else if (token.equals("IDENTIFIER")) {
-      return parseAssignment();
+      String name = consumeToken("IDENTIFIER");
+      if (symbol != null && symbol.getAttribute().equals("(")) {
+        return parseFunctionCall(name);
+      } else {
+        return parseAssignment();
+      }
     }
 
     if (token.equals("SYMBOL") && symbol.getAttribute().equals(";")) {
       step();
       return new EmptyNode();
     }
-
+    System.out.println("Le token courrant est : " + symbol.getAttribute());
     throw new RuntimeException("Error");
   }
 
-  // Case of INT x = 5;
+  private Node parseReturn() {
+    step();
+    Node exp = parseExpression();
+    return new ReturnNode(exp);
+  }
+
+  // Case of INT x = 5 or function declaration;
   public Node parseDeclarationType(){
     String typeString = consumeToken("TYPE");
-    return endAssignment(new TypeNode(typeString));
+    String name = consumeToken("IDENTIFIER");
+
+    if(symbol == null ||symbol.getAttribute().equals("(")){
+      return parseFunctionDeclaration(typeString, name);
+    }
+    return endAssignment(new TypeNode(typeString), name);
   }
+
+  private Node parseFunctionDeclaration(String typeString, String name) {
+    consumeSymbol("(");
+    ArrayList<Node> parameters = new ArrayList<>();
+    if(!symbol.getAttribute().equals(")")){
+      do {
+        if(!parameters.isEmpty()) consumeSymbol(",");
+        String type = consumeToken("TYPE");
+        String pName = consumeToken("IDENTIFIER");
+        parameters.add(new ParameterNode(type, pName));
+      } while (symbol.getAttribute().equals(","));
+
+    }
+    consumeSymbol(")");
+    Node funBody = parseBlock();
+    return new FunctionNode(typeString, name, parameters, funBody);
+  }
+
+  public Node parseFunctionCall(String name) {
+    List<Node> params = new ArrayList<>();
+    consumeSymbol("(");
+    if (!symbol.getAttribute().equals(")")) {
+      do {
+        if (!params.isEmpty()) consumeSymbol(",");
+        params.add(parseExpression());
+
+      } while (symbol.getAttribute().equals(","));
+    }
+    consumeSymbol(")");
+    return new FunctionCallNode(name, params);
+  }
+
 
   // Case of x = 10;
   private Node parseAssignment(){
-    return endAssignment(new EmptyNode());
+    return endAssignment(new EmptyNode(), "");
   }
 
-  private Node endAssignment(Node typeNode){
-    String identifier = consumeToken("IDENTIFIER");
-    Node newIdNode = new IdNode(identifier);
+  private Node    endAssignment(Node typeNode, String name){
+    Node newIdNode = new IdNode(name);
 
     consumeSymbol("=");
     Node valueAttributed = parseExpression();
@@ -231,7 +282,11 @@ public class Parser {
     String token = symbol.getToken();
 
     if (token.equals("IDENTIFIER")) {
-      return new IdNode(consumeToken("IDENTIFIER"));
+      String name = consumeToken("IDENTIFIER");
+      if (symbol != null && symbol.getAttribute().equals("(")) {
+        return parseFunctionCall(name);
+      }
+      return new IdNode(name);
     }
 
     if (token.equals("NUMBER")) {
