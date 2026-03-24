@@ -47,7 +47,9 @@ public class TestParser extends TestCase {
                         "    INT current = startValue;\n" +
                         "    INT iterations = 0;\n" +
                         "    \n" +
-                        "    while (current < seuil && isRunning == true) {\n" +
+
+                        "    # ceci est une boucle while \n " +
+                        "while (current < seuil && isRunning == true) {\n" +
                         "        current = current + max(iterations, 5) * 2;\n" +
                         "        iterations = iterations + 1;\n" +
                         "        \n" +
@@ -61,10 +63,6 @@ public class TestParser extends TestCase {
                         "INT resultatFinal = process(10);\n" +
                         "print(\"Le resultat est : \", resultatFinal);\n";
 
-        System.out.println("\n==================================================");
-        System.out.println("DÉBUT DU TEST PARSER 3 (CODE COMPLEXE)");
-        System.out.println("==================================================");
-
         try {
             Reader reader = new StringReader(code);
             Lexer lexer = new Lexer(reader);
@@ -73,7 +71,6 @@ public class TestParser extends TestCase {
             Node ast = parser.getAST();
 
             System.out.println("AST GÉNÉRÉ AVEC SUCCÈS ! Voici l'arbre :\n");
-            // Si tes toString() sont bien faits, ça va afficher un arbre massif !
             System.out.println(ast.toString());
 
         } catch (Exception e) {
