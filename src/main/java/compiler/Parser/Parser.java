@@ -273,10 +273,11 @@ public class Parser {
   private Node parseBlock(){
     consumeSymbol("{");
     LocalBlockNode localBlockNode = new LocalBlockNode();
-    while (symbol != null && symbol.getAttribute().equals("}")){
+    while (symbol != null && !symbol.getAttribute().equals("}")){
       Node parseBlock = parse();
       if(parseBlock != null) localBlockNode.AddLocalNode(parseBlock);
     }
+
     consumeSymbol("}");
     return localBlockNode;
   }
