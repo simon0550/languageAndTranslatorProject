@@ -14,6 +14,11 @@ public class CollectionDefNode extends Node{
 
   @Override
   public String print(int depth) {
-    return "";
+    StringBuilder sb = new StringBuilder();
+    sb.append(indent(depth)).append("CollectionDefNode(").append(name).append(")\n");
+    for (Node prop : properties) {
+      sb.append(prop.print(depth + 1));
+    }
+    return sb.toString();
   }
 }

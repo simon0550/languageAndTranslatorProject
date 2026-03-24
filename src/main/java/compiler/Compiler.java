@@ -22,7 +22,7 @@ public class Compiler {
             Parser parser = new Parser(lexer);
             Node ast = parser.getAST();
             if (ast != null) {
-                System.out.println(ast.toString());
+                System.out.print(ast.print(0));
             }
         }
     }

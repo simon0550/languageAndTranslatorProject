@@ -18,6 +18,11 @@ public class ForNode extends Node{
 
   @Override
   public String print(int depth) {
-    return "";
+    return indent(depth) + "ForNode\n" +
+        init.print(depth + 1) +
+        start.print(depth + 1) +
+        end.print(depth + 1) +
+        step.print(depth + 1) +
+        body.print(depth + 1);
   }
 }

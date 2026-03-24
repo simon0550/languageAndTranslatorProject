@@ -2,18 +2,19 @@ package compiler.Parser;
 
 public class DeclarationNode extends Node{
 
-  private String typeString;
+  private String type;
   private String name;
   private boolean isFinal;
 
-  public DeclarationNode(String typeString, String name, boolean isFinal) {
-    this.typeString = typeString;
+  public DeclarationNode(String type, String name, boolean isFinal) {
+    this.type = type;
     this.name = name;
     this.isFinal = isFinal;
   }
 
   @Override
   public String print(int depth) {
-    return "";
+    String finalStr = isFinal ? "final " : "";
+    return indent(depth) + "DeclarationNode(" + finalStr + type + " " + name + ")\n";
   }
 }
