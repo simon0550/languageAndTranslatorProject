@@ -178,16 +178,12 @@ public class Parser {
   private Node parseFor() {
     consumeToken("KW_FOR");
     consumeSymbol("(");
-    Node init = parseExpression();
-    consumeSymbol(";");
-    Node start = parseExpression();
-    consumeSymbol("->");
-    Node end = parseExpression();
-    consumeSymbol(";");
+    Node init = parseExpression(); consumeSymbol(";");
+    Node start = parseExpression(); consumeSymbol("->");
+    Node end = parseExpression(); consumeSymbol(";");
     Node step = parseExpression();
     consumeSymbol(")");
-    Node body = parseBlock();
-    return new ForNode(init, start, end, step, body);
+    return new ForNode(init, start, end, step, parse());
   }
 
   public Node parseDeclarationType(boolean isFinal){
@@ -269,7 +265,7 @@ public class Parser {
     Node newIdNode = new IdNode(name);
     consumeSymbol("=");
     Node valueAttributed = parseExpression();
-    consumeSymbol(";");
+    if (symbol != null && symbol.getAttribute().equals(";")) consumeSymbol(";");
     return new AssignmentNode(typeNode, newIdNode, valueAttributed);
   }
 
@@ -277,7 +273,7 @@ public class Parser {
   private Node parseBlock(){
     consumeSymbol("{");
     LocalBlockNode localBlockNode = new LocalBlockNode();
-    while (symbol != null && !(symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals("}"))){
+    while (symbol != null && symbol.getAttribute().equals("}")){
       Node parseBlock = parse();
       if(parseBlock != null) localBlockNode.AddLocalNode(parseBlock);
     }
@@ -296,7 +292,7 @@ public class Parser {
     Node elseLocalBlock = new EmptyNode();
 
     if(symbol != null && symbol.getToken().equals("KW_ELSE")){
-      consumeToken("KW_ELSE");
+      step();
       elseLocalBlock = parse();
     }
     return new IfNode(ifCondition,thenLocalBlock,elseLocalBlock);
@@ -309,8 +305,7 @@ public class Parser {
     Node whileCondition = parseExpression();
     consumeSymbol(")");
 
-    Node whileBody = parse();
-    return new WhileNode(whileCondition,whileBody);
+    return new WhileNode(whileCondition,parse());
   }
 
   private Node parseExpression() {
@@ -390,60 +385,57 @@ public class Parser {
   }
 
   private Node parseFinalSymbol(){
+    if (symbol == null) throw new RuntimeException("Unexpected end of input");
+
     String token = symbol.getToken();
+    String attr = symbol.getAttribute().toString();
+
+    if (token.equals("NUMBER")) return new IntNode(consumeToken("NUMBER"));
+    if (token.equals("FLOAT")) return new FloatNode(consumeToken("FLOAT"));
+    if (token.equals("STRING")) return new StringNode(consumeToken("STRING"));
+    if (token.equals("BOOL")) return new BoolNode(Boolean.parseBoolean(consumeToken("BOOL")));
+
+    if (attr.equals("(")) {
+      consumeSymbol("(");
+      Node e = parseExpression();
+      consumeSymbol(")");
+      return e;
+    }
 
     if (token.equals("TYPE")) {
-      String type = consumeToken("TYPE");
-      consumeToken("KW_ARRAY");
+      String typeName = consumeToken("TYPE");
+      if (symbol != null && (symbol.getToken().equals("KW_ARRAY") || symbol.getAttribute().toString().equals("ARRAY"))) {
+        step();
+        consumeSymbol("[");
+        Node size = parseExpression();
+        consumeSymbol("]");
+        return new ArrayNode(typeName, size);
+      }
+      return new TypeNode(typeName);
+    }
+
+    if (attr.equals("[")) {
       consumeSymbol("[");
-      Node size = parseExpression();
+      List<Node> elements = new ArrayList<>();
+      if (symbol != null && !symbol.getAttribute().equals("]")) {
+        elements.add(parseExpression());
+        while (symbol != null && symbol.getAttribute().equals(",")) {
+          consumeSymbol(",");
+          elements.add(parseExpression());
+        }
+      }
       consumeSymbol("]");
-      return new ArrayNode(type, size);
+      return new ArrayLiteralNode(elements);
     }
 
     if (token.equals("IDENTIFIER") || token.equals("COLLECTION")) {
-      String name = (token.equals("COLLECTION")) ? consumeToken("COLLECTION") : consumeToken("IDENTIFIER");
-
-      Node leftNode = new IdNode(name);
-
-      if (symbol != null && symbol.getAttribute().equals("(")) {
-        return parseFunctionCall(name);
-      }
-      else if (symbol != null && symbol.getAttribute().equals("[")) {
-        consumeSymbol("[");
-        Node index = parseExpression();
-        consumeSymbol("]");
-        leftNode = new TableAccessNode(new IdNode(name), index);
-      }
-      while (symbol != null && symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals(".")) {
-        consumeSymbol(".");
-        String propName = consumeToken("IDENTIFIER");
-        leftNode = new DotNode(leftNode, propName);
-      }
-      return leftNode;
+      String name = attr;
+      step();
+      Node id = new IdNode(name);
+      return parseSuffixes(id);
     }
 
-    if (token.equals("NUMBER")) {
-      return new IntNode(consumeToken("NUMBER"));
-    }
-    else if (token.equals("FLOAT")) {
-      return new FloatNode(consumeToken("FLOAT"));
-    }
-    else if (token.equals("BOOL")) {
-      String val = consumeToken("BOOL");
-      return new BoolNode(Boolean.parseBoolean(val));
-    }
-    else if (token.equals("STRING")) {
-      return new StringNode(consumeToken("STRING"));
-    }
-    if (symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals("(")) {
-      consumeSymbol("(");
-      Node expr = parseExpression();
-      consumeSymbol(")");
-      return expr;
-    }
-
-    throw new RuntimeException("ParseFinalSymbol error");
+    throw new RuntimeException("FinalSymbol error: Unexpected token " + token + " with value " + attr);
   }
 
 
