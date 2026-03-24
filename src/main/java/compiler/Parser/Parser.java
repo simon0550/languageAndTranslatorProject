@@ -78,13 +78,17 @@ public class Parser {
       if (symbol != null && symbol.getAttribute().equals("(")) {
         return parseFunctionCall(name);
       } else {
-        return parseAssignment();
+        return parseAssignment(name);
       }
     }
 
     if (token.equals("SYMBOL") && symbol.getAttribute().equals(";")) {
       step();
       return new EmptyNode();
+    }
+
+    if(token.equals("COMMENT")){
+      return new CommentNode(consumeToken("COMMENT"));
     }
     System.out.println("Le token courrant est : " + symbol.getAttribute());
     throw new RuntimeException("Error");
@@ -140,8 +144,8 @@ public class Parser {
 
 
   // Case of x = 10;
-  private Node parseAssignment(){
-    return endAssignment(new EmptyNode(), "");
+  private Node parseAssignment(String name){
+    return endAssignment(new EmptyNode(), name);
   }
 
   private Node    endAssignment(Node typeNode, String name){
@@ -306,5 +310,7 @@ public class Parser {
 
     throw new RuntimeException("ParseFinalSymbol error");
   }
+
+
 
 }

@@ -58,10 +58,14 @@ public class Lexer {
                 continue;
             }
             if (current == '#') {
+                StringBuilder sb = new StringBuilder();
+                nextChar();
                 while (current != '\n' && current != -1) {
+                    sb.appendCodePoint(current);
                     nextChar();
                 }
-                continue;
+
+                return new Symbol("COMMENT",sb.toString());
             }
             break;
         }
