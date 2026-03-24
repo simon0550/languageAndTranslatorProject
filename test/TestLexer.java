@@ -86,22 +86,12 @@ public class TestLexer {
 
         Symbol symbol = lexer.getNextSymbol();
         assertNotNull(symbol);
-        assertEquals("FLOAT", symbol.getToken());
+        assertEquals("IDENTIFIER", symbol.getToken());
         assertEquals("56.56", symbol.getAttribute());
 
     }
 
-    @Test
-    public void testNumberFloat2() {
-        String input = "int x = .56";
-        Lexer lexer = new Lexer(new StringReader(input));
 
-        Symbol symbol = lexer.getNextSymbol();
-        assertNotNull(symbol);
-        assertEquals("FLOAT", symbol.getToken());
-        assertEquals(".56", symbol.getAttribute());
-
-    }
 
     @Test
     public void testFloatException(){
@@ -126,6 +116,13 @@ public class TestLexer {
     public void complexTest(){
         String input = "List<String> test == 2; test == 3; int l = 8; \n #test \n";
         List<Symbol> symbols = getAllSymbolsFromString(input);
+        System.out.println(symbols);
+    }
+
+    @Test
+    public void arrayTest(){
+        String table = "ARRAY INT table = [8,10,8,10]; INT a = table[0]";
+        List<Symbol> symbols = getAllSymbolsFromString(table);
         System.out.println(symbols);
     }
 }

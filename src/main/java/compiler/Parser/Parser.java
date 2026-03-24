@@ -77,9 +77,10 @@ public class Parser {
       String name = consumeToken("IDENTIFIER");
       if (symbol != null && symbol.getAttribute().equals("(")) {
         return parseFunctionCall(name);
-      } else {
-        return parseAssignment(name);
+      }else if (symbol != null && symbol.getAttribute().equals("[")) {
+        return parseTableAccess(name);
       }
+        return parseAssignment(name);
     }
 
     if (token.equals("SYMBOL") && symbol.getAttribute().equals(";")) {
@@ -90,7 +91,13 @@ public class Parser {
     if(token.equals("COMMENT")){
       return new CommentNode(consumeToken("COMMENT"));
     }
-    System.out.println("Le token courrant est : " + symbol.getAttribute());
+    System.out.println("Le token courrant est : " + symbol.getToken());
+
+    if(token.equals("COLLECTION")){
+      consumeToken("COLLECTION");
+
+      return parseArray();
+    }
     throw new RuntimeException("Error");
   }
 
@@ -107,8 +114,42 @@ public class Parser {
 
     if(symbol == null ||symbol.getAttribute().equals("(")){
       return parseFunctionDeclaration(typeString, name);
+    } else if (symbol.getAttribute().equals("[")) {
+      parseTableAccess(name);
     }
     return endAssignment(new TypeNode(typeString), name);
+  }
+  private Node parseTableAccess(String name) {
+    consumeSymbol("[");
+    Node index = parseExpression();
+    consumeSymbol("]");
+    consumeSymbol("=");
+    Node value = parseExpression();
+    consumeSymbol(";");
+    return new TableAssignmentNode(new IdNode(name), index, value);
+  }
+
+  private Node parseArray() {
+    List<Node> elements = new ArrayList<>();
+
+    Node type = new TypeNode(consumeToken("TYPE"));
+    Node nameNode = new IdNode(consumeToken("IDENTIFIER"));
+
+    consumeSymbol("=");
+    consumeSymbol("[");
+
+    if (!symbol.getAttribute().equals("]")) {
+      elements.add(parseExpression());
+
+      while (symbol.getAttribute().equals(",")) {
+        consumeSymbol(",");
+        elements.add(parseExpression());
+      }
+    }
+    consumeSymbol("]");
+    consumeSymbol(";");
+    return new CollectionDeclarationNode(nameNode, elements, type);
+
   }
 
   private Node parseFunctionDeclaration(String typeString, String name) {
@@ -128,7 +169,7 @@ public class Parser {
     return new FunctionNode(typeString, name, parameters, funBody);
   }
 
-  public Node parseFunctionCall(String name) {
+  private Node parseFunctionCall(String name) {
     List<Node> params = new ArrayList<>();
     consumeSymbol("(");
     if (!symbol.getAttribute().equals(")")) {
@@ -291,6 +332,12 @@ public class Parser {
       if (symbol != null && symbol.getAttribute().equals("(")) {
         return parseFunctionCall(name);
       }
+      if (symbol != null && symbol.getAttribute().equals("[")) {
+        consumeSymbol("[");
+        Node index = parseExpression();
+        consumeSymbol("]");
+        return new TableAccessNode(new IdNode(name), index); // Assure-toi que cette classe existe !
+      }
       return new IdNode(name);
     }
 
@@ -307,10 +354,15 @@ public class Parser {
     else if (token.equals("STRING")) {
       return new StringNode(consumeToken("STRING"));
     }
+    if (symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals("(")) {
+      consumeSymbol("(");
+      Node expr = parseExpression(); // On relance la machine récursivement
+      consumeSymbol(")");
+      return expr;
+    }
 
     throw new RuntimeException("ParseFinalSymbol error");
   }
-
 
 
 }
