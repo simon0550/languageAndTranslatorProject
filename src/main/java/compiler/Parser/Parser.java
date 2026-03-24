@@ -54,8 +54,21 @@ public class Parser {
   private Node parse(){
     String token = symbol.getToken();
 
+    if (token.equals("KW_FINAL")) {
+      consumeToken("KW_FINAL");
+      return parseDeclarationType(true);
+    }
+
     if (token.equals("TYPE")) {
-      return parseDeclarationType();
+      return parseDeclarationType(false);
+    }
+
+    else if (token.equals("KW_DEF")) {
+      return parseDef();
+    }
+
+   else if (token.equals("KW_COLL")) {
+      return parseCollectionDef();
     }
 
     else if (token.equals("SYMBOL") && symbol.getAttribute().equals("{")) {
@@ -69,12 +82,18 @@ public class Parser {
     else if (token.equals("KW_WHILE")) {
       return parseWhile();
     }
+
+    else if (token.equals("KW_FOR")) {
+      return parseFor();
+    }
+
     else if (token.equals("KW_RETURN")){
       return parseReturn();
     }
 
     else if (token.equals("IDENTIFIER")) {
       String name = consumeToken("IDENTIFIER");
+
       if (symbol != null && symbol.getAttribute().equals("(")) {
         return parseFunctionCall(name);
       }else if (symbol != null && symbol.getAttribute().equals("[")) {
@@ -101,24 +120,68 @@ public class Parser {
     throw new RuntimeException("Error");
   }
 
+  private Node parseCollectionDef() {
+    consumeToken("KW_COLL");
+    String name = consumeToken("IDENTIFIER");
+    consumeSymbol("{");
+    List<Node> properties = new ArrayList<>();
+    while (symbol != null && !(symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals("}"))) {
+      properties.add(parseDeclarationType(false));
+    }
+    consumeSymbol("}");
+    return new CollectionDefNode(name, properties);
+  }
+
+  private Node parseDef() {
+    consumeToken("KW_DEF");
+    String returnType = "VOID";
+    if (symbol.getToken().equals("TYPE")) {
+      returnType = consumeToken("TYPE");
+    }
+    String name = consumeToken("IDENTIFIER");
+    return parseFunctionDeclaration(returnType, name);
+  }
+
   private Node parseReturn() {
     step();
     Node exp = parseExpression();
     return new ReturnNode(exp);
   }
 
-  // Case of INT x = 5 or function declaration;
-  public Node parseDeclarationType(){
+  private Node parseFor() {
+    consumeToken("KW_FOR");
+    consumeSymbol("(");
+    Node init = parseExpression();
+    consumeSymbol(";");
+    Node start = parseExpression();
+    consumeSymbol("->");
+    Node end = parseExpression();
+    consumeSymbol(";");
+    Node step = parseExpression();
+    consumeSymbol(")");
+    Node body = parseBlock();
+    return new ForNode(init, start, end, step, body);
+  }
+
+  public Node parseDeclarationType(boolean isFinal){
     String typeString = consumeToken("TYPE");
+
+    if (symbol != null && symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals("[")) {
+      consumeSymbol("[");
+      consumeSymbol("]");
+      typeString += "[]";
+    }
+
     String name = consumeToken("IDENTIFIER");
 
-    if(symbol == null ||symbol.getAttribute().equals("(")){
-      return parseFunctionDeclaration(typeString, name);
-    } else if (symbol.getAttribute().equals("[")) {
-      parseTableAccess(name);
+    if (symbol != null && symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals(";")) {
+      consumeSymbol(";");
+      return new DeclarationNode(typeString, name, isFinal);
     }
+
     return endAssignment(new TypeNode(typeString), name);
   }
+
   private Node parseTableAccess(String name) {
     consumeSymbol("[");
     Node index = parseExpression();
@@ -184,7 +247,6 @@ public class Parser {
   }
 
 
-  // Case of x = 10;
   private Node parseAssignment(String name){
     return endAssignment(new EmptyNode(), name);
   }
@@ -240,12 +302,10 @@ public class Parser {
     return new WhileNode(whileCondition,whileBody);
   }
 
-  // Use of priority
   private Node parseExpression() {
     return parseOrExpression();
   }
 
-  // Less priority than And (||)
   private Node parseOrExpression(){
     Node firstPartNode = parseAndExpression();
     while (symbol != null && symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals("||")){
@@ -257,7 +317,6 @@ public class Parser {
     return firstPartNode;
   }
 
-  // Less priority than Equality (&&)
   private Node parseAndExpression(){
     Node firstPartNode = parseEqualityExpression();
     while (symbol != null && symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals("&&")){
@@ -269,7 +328,6 @@ public class Parser {
     return firstPartNode;
   }
 
-  // Less priority than Relational (==,=/=)
   private Node parseEqualityExpression(){
     Node firstPartNode = parseRelationalExpression();
     while (symbol != null && symbol.getToken().equals("SYMBOL")
@@ -282,7 +340,6 @@ public class Parser {
     return firstPartNode;
   }
 
-  // Less priority than Add (<,>,<=,>=)
   private Node parseRelationalExpression(){
     Node firstPartNode = parseAddExpression();
     while (symbol != null && symbol.getToken().equals("SYMBOL") &&
@@ -296,7 +353,6 @@ public class Parser {
     return firstPartNode;
   }
 
-  // Less priority than Mul (+/-)
   private Node parseAddExpression(){
     Node firstPartNode = parseMulExpression();
     while (symbol != null && symbol.getToken().equals("SYMBOL") &&
@@ -309,7 +365,6 @@ public class Parser {
     return firstPartNode;
   }
 
-  // Less priority than Primary
   private Node parseMulExpression(){
     Node firstPartNode = parseFinalSymbol();
     while (symbol != null && symbol.getToken().equals("SYMBOL") &&
@@ -323,7 +378,6 @@ public class Parser {
     return firstPartNode;
   }
 
-  // The most priority
   private Node parseFinalSymbol(){
     String token = symbol.getToken();
 
