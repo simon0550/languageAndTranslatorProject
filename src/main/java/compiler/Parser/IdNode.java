@@ -12,4 +12,8 @@ public class IdNode extends Node{
   public String print(int depth) {
     return indent(depth) + "IdNode(" + name +")\n";
   }
+
+  public String getName() {
+    return name;
+  }
 }
