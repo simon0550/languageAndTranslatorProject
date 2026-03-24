@@ -8,6 +8,8 @@ public class BoolNode extends Node {
 
     @Override
     public String toString() {
-        return "Bool, " + value;
+        return "BoolNode{" +
+            "value=" + value +
+            '}';
     }
 }

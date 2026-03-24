@@ -10,6 +10,8 @@ public class FloatNode extends Node{
 
   @Override
   public String toString() {
-    return "Float, " + value;
+    return "FloatNode{" +
+        "value='" + value + '\'' +
+        '}';
   }
 }

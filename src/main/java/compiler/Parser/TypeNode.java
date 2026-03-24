@@ -10,6 +10,8 @@ public class TypeNode extends Node{
 
   @Override
   public String toString() {
-    return "Type, " + type;
+    return "TypeNode{" +
+        "type='" + type + '\'' +
+        '}';
   }
 }
