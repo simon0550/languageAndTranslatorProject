@@ -103,7 +103,7 @@ public class Parser {
         consumeSymbol("=");
         Node val = parseExpression();
         consumeSymbol(";");
-        return new AssignmentNode(new EmptyNode(), left, val);
+        return new AssignmentNode(new EmptyNode(), left, val, false);
       }
 
       if (left instanceof FunctionCallNode || left instanceof DotNode) {
@@ -212,7 +212,7 @@ public class Parser {
       return new DeclarationNode(type, name, isFinal);
     }
 
-    return endAssignment(new TypeNode(type), name);
+    return endAssignment(new TypeNode(type), name, isFinal);
   }
 
   private Node parseFunctionDeclaration(String type, String name) {
@@ -261,12 +261,12 @@ public class Parser {
   }
 
 
-  private Node endAssignment(Node typeNode, String name){
+  private Node endAssignment(Node typeNode, String name, boolean isFinal){
     Node newIdNode = new IdNode(name);
     consumeSymbol("=");
     Node valueAttributed = parseExpression();
     if (symbol != null && symbol.getAttribute().equals(";")) consumeSymbol(";");
-    return new AssignmentNode(typeNode, newIdNode, valueAttributed);
+    return new AssignmentNode(typeNode, newIdNode, valueAttributed, isFinal);
   }
 
 
