@@ -14,7 +14,7 @@ public class TableAssignmentNode extends Node {
     @Override
     public String print(int depth) {
         StringBuilder sb = new StringBuilder();
-        sb.append(indent(depth)).append("TableAssignmentNode:\n").append(indent(depth+1)+ "Index:\n").append(name.print(depth + 2));
+        sb.append(indent(depth)).append("TableAssignmentNode:\n").append(name.print(depth + 2));
         sb.append(indent(depth + 1)).append("Index:\n");
         if (index != null) {
             sb.append(index.print(depth + 2));
