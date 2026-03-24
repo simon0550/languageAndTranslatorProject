@@ -52,6 +52,7 @@ public class Parser {
 
 
   private Node parse(){
+    if (symbol == null) return new EmptyNode();
     String token = symbol.getToken();
 
     if (token.equals("KW_FINAL")) {
