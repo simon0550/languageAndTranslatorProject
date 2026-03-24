@@ -94,12 +94,29 @@ public class Parser {
     else if (token.equals("IDENTIFIER")) {
       String name = consumeToken("IDENTIFIER");
 
+      Node leftNode = new IdNode(name);
+      if (symbol != null && symbol.getAttribute().equals("[")) {
+        consumeSymbol("[");
+        Node index = parseExpression();
+        consumeSymbol("]");
+        leftNode = new TableAccessNode((IdNode) leftNode, index);
+      }
+
+      while (symbol != null && symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals(".")) {
+        consumeSymbol(".");
+        String propName = consumeToken("IDENTIFIER");
+        leftNode = new DotAccessNode(leftNode, propName);
+      }
+
       if (symbol != null && symbol.getAttribute().equals("(")) {
         return parseFunctionCall(name);
-      }else if (symbol != null && symbol.getAttribute().equals("[")) {
-        return parseTableAccess(name);
+      } else if (symbol != null && symbol.getAttribute().equals("=")) {
+        consumeSymbol("=");
+        Node value = parseExpression();
+        consumeSymbol(";");
+        return new AssignmentNode(new EmptyNode(), leftNode, value);
       }
-        return parseAssignment(name);
+      return leftNode;
     }
 
     if (token.equals("SYMBOL") && symbol.getAttribute().equals(";")) {
@@ -110,13 +127,8 @@ public class Parser {
     if(token.equals("COMMENT")){
       return new CommentNode(consumeToken("COMMENT"));
     }
-    System.out.println("Le token courrant est : " + symbol.getToken());
 
-    if(token.equals("COLLECTION")){
-      consumeToken("COLLECTION");
-
-      return parseArray();
-    }
+    System.out.println("Le token courant est : " + symbol.getToken());
     throw new RuntimeException("Error");
   }
 
@@ -182,39 +194,6 @@ public class Parser {
     return endAssignment(new TypeNode(typeString), name);
   }
 
-  private Node parseTableAccess(String name) {
-    consumeSymbol("[");
-    Node index = parseExpression();
-    consumeSymbol("]");
-    consumeSymbol("=");
-    Node value = parseExpression();
-    consumeSymbol(";");
-    return new TableAssignmentNode(new IdNode(name), index, value);
-  }
-
-  private Node parseArray() {
-    List<Node> elements = new ArrayList<>();
-
-    Node type = new TypeNode(consumeToken("TYPE"));
-    Node nameNode = new IdNode(consumeToken("IDENTIFIER"));
-
-    consumeSymbol("=");
-    consumeSymbol("[");
-
-    if (!symbol.getAttribute().equals("]")) {
-      elements.add(parseExpression());
-
-      while (symbol.getAttribute().equals(",")) {
-        consumeSymbol(",");
-        elements.add(parseExpression());
-      }
-    }
-    consumeSymbol("]");
-    consumeSymbol(";");
-    return new CollectionDeclarationNode(nameNode, elements, type);
-
-  }
-
   private Node parseFunctionDeclaration(String typeString, String name) {
     consumeSymbol("(");
     ArrayList<Node> parameters = new ArrayList<>();
@@ -247,11 +226,7 @@ public class Parser {
   }
 
 
-  private Node parseAssignment(String name){
-    return endAssignment(new EmptyNode(), name);
-  }
-
-  private Node    endAssignment(Node typeNode, String name){
+  private Node endAssignment(Node typeNode, String name){
     Node newIdNode = new IdNode(name);
 
     consumeSymbol("=");
