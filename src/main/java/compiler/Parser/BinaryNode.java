@@ -36,9 +36,10 @@ public class BinaryNode extends Node {
 
   @Override
   public String toString() {
-    return "Expr\n" +
-        left.toString() + "\n" +
-        getOperatorCategory() + ", " + operator + "\n" +
-        right.toString();
+    return "BinaryNode{" +
+        "operator='" + operator + '\'' +
+        ", left=" + left +
+        ", right=" + right +
+        '}';
   }
 }

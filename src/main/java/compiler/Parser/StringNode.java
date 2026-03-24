@@ -10,6 +10,8 @@ public class StringNode extends Node {
 
   @Override
   public String toString() {
-    return "String, " + content;
+    return "StringNode{" +
+        "content='" + content + '\'' +
+        '}';
   }
 }

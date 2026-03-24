@@ -45,6 +45,7 @@ public class Parser {
     if (symbol != null && symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals(expectedSymbol)) {
       step();
     }else{
+      System.out.println("Expected : " + expectedSymbol + " GOT : " +symbol.getAttribute());
       throw new RuntimeException();
     }
   }

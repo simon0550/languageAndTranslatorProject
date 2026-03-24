@@ -3,6 +3,7 @@ import compiler.Parser.Node;
 import compiler.Parser.Parser;
 import java.io.Reader;
 import java.io.StringReader;
+import org.junit.Test;
 
 public class TestParser {
   public static void main(String[] args) {
@@ -25,4 +26,92 @@ public class TestParser {
     System.out.println("AST Résultat :");
     System.out.println(ast.toString());
   }
+
+  @Test
+  public void testParser2() {
+    String code =
+        "INT add(INT a, INT b) {\n" +
+            "    RETURN a + b;\n" +
+            "}\n" +
+            "INT resultat = add(5, 10);\n" +
+            "print(resultat);";
+
+    System.out.println("\n========================================");
+    System.out.println("DÉBUT DU TEST PARSER 2 (FONCTIONS)");
+    System.out.println("========================================");
+
+    try {
+      Reader reader = new StringReader(code);
+      Lexer lexer = new Lexer(reader);
+      Parser parser = new Parser(lexer);
+
+      Node ast = parser.getAST();
+
+      System.out.println("AST GÉNÉRÉ :");
+      System.out.println(ast.toString());
+
+    } catch (Exception e) {
+      System.err.println("ERREUR DE PARSING : " + e.getMessage());
+      e.printStackTrace();
+    }
+
+    System.out.println("========================================\n");
+  }
+
+  @Test
+  public void testParser3_ComplexCode() {
+    String code =
+        "INT seuil = 100;\n" +
+            "BOOL isRunning = true;\n" +
+            "\n" +
+            "INT max(INT x, INT y) {\n" +
+            "    if (x >= y) {\n" +
+            "        RETURN x;\n" +
+            "    } else {\n" +
+            "        RETURN y;\n" +
+            "    }\n" +
+            "}\n" +
+            "\n" +
+            "INT process(INT startValue) {\n" +
+            "    INT current = startValue;\n" +
+            "    INT iterations = 0;\n" +
+            "    \n" +
+            "    while (current < seuil && isRunning == true) {\n" +
+            "        current = current + max(iterations, 5) * 2;\n" +
+            "        iterations = iterations + 1;\n" +
+            "        \n" +
+            "        if (iterations > 50 || current < 0) {\n" +
+            "            isRunning = false;\n" +
+            "        }\n" +
+            "    }\n" +
+            "    RETURN current;\n" +
+            "}\n" +
+            "\n" +
+            "INT resultatFinal = process(10);\n" +
+            "print(\"Le resultat est : \", resultatFinal);\n";
+
+    System.out.println("\n==================================================");
+    System.out.println("DÉBUT DU TEST PARSER 3 (CODE COMPLEXE)");
+    System.out.println("==================================================");
+
+    try {
+      Reader reader = new StringReader(code);
+      Lexer lexer = new Lexer(reader);
+      Parser parser = new Parser(lexer);
+
+      Node ast = parser.getAST();
+
+      System.out.println("AST GÉNÉRÉ AVEC SUCCÈS ! Voici l'arbre :\n");
+      // Si tes toString() sont bien faits, ça va afficher un arbre massif !
+      System.out.println(ast.toString());
+
+    } catch (Exception e) {
+      System.err.println("ERREUR DE PARSING : " + e.getMessage());
+      e.printStackTrace();
+    }
+
+    System.out.println("==================================================\n");
+  }
 }
+
+

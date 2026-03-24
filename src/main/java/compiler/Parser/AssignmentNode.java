@@ -3,7 +3,9 @@ package compiler.Parser;
 public class AssignmentNode extends Node {
   private Node type;       
   private Node identifier; 
-  private Node expression; 
+  private Node expression;
+
+
 
   public AssignmentNode(Node type, Node identifier, Node expression) {
     this.type = type;
@@ -13,10 +15,10 @@ public class AssignmentNode extends Node {
 
   @Override
   public String toString() {
-    return "Expr\n" +
-        type.toString() + "\n" +
-        identifier.toString() + "\n" +
-        "AssignmentOperator\n" +
-        expression.toString();
+    return "AssignmentNode{" +
+        "type=" + type +
+        ", identifier=" + identifier +
+        ", expression=" + expression +
+        "}";
   }
 }

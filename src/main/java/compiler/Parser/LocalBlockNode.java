@@ -13,11 +13,10 @@ public class LocalBlockNode extends Node{
     }
   }
 
-  public String toString(){
-    StringBuilder stringBuilder = new StringBuilder();
-    for(Node node : localNodes){
-      stringBuilder.append(node.toString());
-    }
-    return stringBuilder.toString().trim();
+  @Override
+  public String toString() {
+    return "LocalBlockNode{" +
+        "localNodes=" + localNodes +
+        '}';
   }
 }
