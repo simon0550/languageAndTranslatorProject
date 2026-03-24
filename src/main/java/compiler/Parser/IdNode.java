@@ -7,8 +7,9 @@ public class IdNode extends Node{
     this.name = name;
   }
 
+
   @Override
-  public String toString() {
-    return "Identifier, " + name;
+  public String print(int depth) {
+    return indent(depth) + "IdNode(" + name +")\n";
   }
 }

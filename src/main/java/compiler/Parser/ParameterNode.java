@@ -20,10 +20,9 @@ public class ParameterNode extends Node{
   }
 
   @Override
-  public String toString() {
-    return "ParameterNode{" +
-        "type='" + type + '\'' +
-        ", name='" + name + '\'' +
-        '}';
+  public String print(int depth) {
+    return indent(depth) + "ParameterNode(" + type + ", " + name + ")\n";
   }
+
+
 }

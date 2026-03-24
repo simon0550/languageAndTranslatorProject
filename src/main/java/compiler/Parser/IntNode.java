@@ -8,8 +8,9 @@ public class IntNode extends Node{
     this.value = value;
   }
 
+
   @Override
-  public String toString() {
-    return "Integer, " + value;
+  public String print(int depth) {
+    return indent(depth) + "IntNode(" + value + ")\n";
   }
 }

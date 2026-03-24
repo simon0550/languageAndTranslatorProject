@@ -6,10 +6,9 @@ public class BoolNode extends Node {
         this.value = value;
     }
 
+
     @Override
-    public String toString() {
-        return "BoolNode{" +
-            "value=" + value +
-            '}';
+    public String print(int depth) {
+        return indent(depth) + "bool " + value + "\n";
     }
 }

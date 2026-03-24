@@ -35,11 +35,10 @@ public class BinaryNode extends Node {
   }
 
   @Override
-  public String toString() {
-    return "BinaryNode{" +
-        "operator='" + operator + '\'' +
-        ", left=" + left +
-        ", right=" + right +
-        '}';
+  public String print(int depth) {
+    String res = indent(depth) + "BinaryNode(" + operator + ")\n";
+    res += left.print(depth + 1);
+    res += right.print(depth + 1);
+    return res;
   }
 }

@@ -11,13 +11,13 @@ public class ProgramNode extends Node {
     }
 
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
+    public String print(int depth) {
+        StringBuilder res = new StringBuilder(indent(depth) + "ProgramNode:\n");
         for (Node n : declarations) {
-            if (n != null) {
-                sb.append(n).append("\n");
+            if (n != null && !(n instanceof EmptyNode)) {
+                res.append(n.print(depth + 1));
             }
         }
-        return sb.toString().trim();
+        return res.toString();
     }
 }

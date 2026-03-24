@@ -8,10 +8,9 @@ public class FloatNode extends Node{
     this.value = value;
   }
 
+
   @Override
-  public String toString() {
-    return "FloatNode{" +
-        "value='" + value + '\'' +
-        '}';
+  public String print(int depth) {
+    return indent(depth) + "FloatNode(" + value + ")\n";
   }
 }

@@ -11,12 +11,14 @@ public class IfNode extends Node{
     this.thenCaseBlock = thenCaseBlock;
   }
 
+
   @Override
-  public String toString() {
-    return "IfNode{" +
-        "condition=" + condition +
-        ", thenCaseBlock=" + thenCaseBlock +
-        ", elseCaseBlock=" + elseCaseBlock +
-        '}';
+  public String print(int depth) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(indent(depth)).append("IfNode:\n");
+    sb.append(condition.print(depth + 1)).append("\n");
+    sb.append(thenCaseBlock.print(depth+1)).append("\n");
+    sb.append(elseCaseBlock.print(depth+1)).append("\n");
+    return sb.toString();
   }
 }

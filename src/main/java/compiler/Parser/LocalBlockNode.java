@@ -14,9 +14,14 @@ public class LocalBlockNode extends Node{
   }
 
   @Override
-  public String toString() {
-    return "LocalBlockNode{" +
-        "localNodes=" + localNodes +
-        '}';
+  public String print(int depth) {
+    String res = indent(depth) + "Block:\n";
+    for (Node n : localNodes) {
+      if (n != null && !(n instanceof EmptyNode)) {
+        res += n.print(depth + 1);
+      }
+    }
+    return res;
   }
+
 }

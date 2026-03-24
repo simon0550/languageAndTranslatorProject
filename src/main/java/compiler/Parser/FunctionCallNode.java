@@ -12,10 +12,17 @@ public class FunctionCallNode extends Node{
   }
 
   @Override
-  public String toString() {
-    return "FunctionCallNode{" +
-        "name='" + name + '\'' +
-        ", params=" + params +
-        '}';
+  public String print(int depth) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(indent(depth)).append("FunctionCallNode: ").append(name).append("\n");
+    if (params != null) {
+      for (Node p : params) {
+        if (p != null) {
+          sb.append(p.print(depth + 1));
+        }
+      }
+    }
+
+    return sb.toString();
   }
 }

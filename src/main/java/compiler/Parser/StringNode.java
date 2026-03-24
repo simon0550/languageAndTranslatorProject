@@ -9,9 +9,7 @@ public class StringNode extends Node {
   }
 
   @Override
-  public String toString() {
-    return "StringNode{" +
-        "content='" + content + '\'' +
-        '}';
+  public String print(int depth) {
+    return indent(depth) + "StringNode(" + content + ")" + "\n";
   }
 }

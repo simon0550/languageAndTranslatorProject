@@ -13,12 +13,14 @@ public class AssignmentNode extends Node {
     this.expression = expression;
   }
 
+
   @Override
-  public String toString() {
-    return "AssignmentNode{" +
-        "type=" + type +
-        ", identifier=" + identifier +
-        ", expression=" + expression +
-        "}";
+  public String print(int depth) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(indent(depth)).append("AssignmentNode:\n");
+    sb.append(type.print(depth + 1));
+    sb.append(identifier.print(depth + 1));
+    sb.append(expression.print(depth + 1));
+    return sb.toString();
   }
 }

@@ -16,21 +16,21 @@ public class FunctionNode extends Node{
     this.body = body;
   }
 
-  public String getName() {
-    return name;
-  }
-
-  public List<Node> getParameters() {
-    return parameters;
-  }
-
   @Override
-  public String toString() {
-    return "FunctionNode{" +
-        "name='" + name + '\'' +
-        ", parameters=" + parameters +
-        ", retType='" + retType + '\'' +
-        ", body=" + body +
-        '}';
+  public String print(int depth) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(indent(depth)).append("FunctionNode(").append(retType).append(" ").append(name).append(")\n");
+    if (parameters != null) {
+      for (Node param : parameters) {
+        if (param != null) {
+          sb.append(param.print(depth + 1));
+        }
+      }
+    }
+    if (body != null) {
+      sb.append(body.print(depth + 1));
+    }
+
+    return sb.toString();
   }
 }

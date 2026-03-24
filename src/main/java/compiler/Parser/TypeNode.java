@@ -8,10 +8,9 @@ public class TypeNode extends Node{
     this.type = type;
   }
 
+
   @Override
-  public String toString() {
-    return "TypeNode{" +
-        "type='" + type + '\'' +
-        '}';
+  public String print(int depth) {
+    return indent(depth) + "TypeNode(" + type + ")\n";
   }
 }

@@ -9,10 +9,14 @@ public class  ReturnNode extends Node{
     this.expression = expression;
   }
 
+
   @Override
-  public String toString() {
-    return "ReturnNode{" +
-        "expression=" + expression +
-        '}';
+  public String print(int depth) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(indent(depth)).append("ReturnNode:\n");
+    if (expression != null) {
+      sb.append(expression.print(depth + 1));
+    }
+    return sb.toString();
   }
 }

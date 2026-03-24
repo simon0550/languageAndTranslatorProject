@@ -12,11 +12,16 @@ public class WhileNode extends Node{
   }
 
   @Override
-  public String toString() {
-    return "WhileNode{" +
-        "condition=" + condition +
-        ", codeInNode=" + codeInNode +
-        '}';
+  public String print(int depth) {
+    String res = indent(depth) + "WhileNode:\n";
+    if (condition != null) {
+      res += condition.print(depth + 1);
+    }
+    if (codeInNode != null) {
+      res += codeInNode.print(depth + 1);
+    }
+
+    return res;
   }
 
 
