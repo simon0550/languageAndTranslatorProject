@@ -42,12 +42,13 @@ public class Parser {
 
 
   private void consumeSymbol(String expectedSymbol) {
-    if (symbol != null && symbol.getToken().equals("SYMBOL") && symbol.getAttribute().equals(expectedSymbol)) {
-      step();
-    }else{
-      System.out.println("Expected : " + expectedSymbol + " GOT : " +symbol.getAttribute());
-      throw new RuntimeException();
+    if (symbol != null && symbol.getAttribute().equals(expectedSymbol)) {
+      if (symbol.getToken().equals("SYMBOL") || (expectedSymbol.equals(".") && symbol.getToken().equals("FLOAT"))) {
+        step();
+        return;
+      }
     }
+    throw new RuntimeException();
   }
 
 
@@ -56,11 +57,11 @@ public class Parser {
     String token = symbol.getToken();
 
     if (token.equals("KW_FINAL")) {
-      consumeToken("KW_FINAL");
+      step();
       return parseDeclarationType(true);
     }
 
-    if (token.equals("TYPE") || token.equals("COLLECTION")) {
+    if (token.equals("TYPE") || token.equals("COLLECTION") || token.equals("KW_ARRAY")) {
       return parseDeclarationType(false);
     }
 
@@ -145,10 +146,11 @@ public class Parser {
   }
 
   private Node parseDef() {
-    consumeToken("KW_DEF");
+    step();
     String returnType = "VOID";
-    if (symbol.getToken().equals("TYPE")) {
-      returnType = consumeToken("TYPE");
+    if (symbol.getToken().equals("TYPE") || symbol.getToken().equals("COLLECTION")) {
+      returnType = symbol.getAttribute().toString();
+      step();
     }
     String name = consumeToken("IDENTIFIER");
     return parseFunctionDeclaration(returnType, name);
