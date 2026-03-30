@@ -24,4 +24,12 @@ public class SymbolTable {
       stackScopes.pop();
     }
   }
+
+  public void addNewVariable(String name, String type){
+    stackScopes.peek().put(name,type);
+  }
+
+  public boolean containsVariable(String name){
+    return stackScopes.peek().containsKey(name);
+  }
 }

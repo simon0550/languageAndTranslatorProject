@@ -12,6 +12,14 @@ public class DeclarationNode extends Node{
     this.isFinal = isFinal;
   }
 
+  public String getType() {
+    return type;
+  }
+
+  public String getName() {
+    return name;
+  }
+
   @Override
   public String print(int depth) {
     String finalStr = isFinal ? "final " : "";
