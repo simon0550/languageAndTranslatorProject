@@ -13,6 +13,11 @@ public class AssignmentNode extends Node {
     this.isFinal = isFinal;
   }
 
+  public Node getType() { return type; }
+  public Node getIdentifier() { return identifier; }
+  public Node getExpression() { return expression; }
+  public boolean isFinal() { return isFinal; }
+
 
   @Override
   public String print(int depth) {
