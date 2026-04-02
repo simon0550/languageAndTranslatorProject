@@ -11,6 +11,14 @@ public class WhileNode extends Node{
     this.codeInNode = codeInNode;
   }
 
+  public Node getCondition() {
+    return condition;
+  }
+
+  public Node getCodeInNode() {
+    return codeInNode;
+  }
+
   @Override
   public String print(int depth) {
     String res = indent(depth) + "WhileNode:\n";
