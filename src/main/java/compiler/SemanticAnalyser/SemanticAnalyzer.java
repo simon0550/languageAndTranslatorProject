@@ -63,7 +63,11 @@ public class SemanticAnalyzer {
   }
 
   private void browseLocalBlockNode(LocalBlockNode localBlockNode){
-
+    symbolTable.addNewScope();
+    for(Node node : localBlockNode.getLocalNodes()){
+      browse(node);
+    }
+    symbolTable.removeScope();
   }
 
   private void browseIfNode(IfNode ifNode){
