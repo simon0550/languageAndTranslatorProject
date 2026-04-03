@@ -5,6 +5,7 @@ import compiler.Parser.BoolNode;
 import compiler.Parser.DeclarationNode;
 import compiler.Parser.EmptyNode;
 import compiler.Parser.FloatNode;
+import compiler.Parser.IdNode;
 import compiler.Parser.IfNode;
 import compiler.Parser.IntNode;
 import compiler.Parser.LocalBlockNode;
@@ -47,6 +48,7 @@ public class SemanticAnalyzer {
     else if(node instanceof DeclarationNode){
       browseDeclarationNode((DeclarationNode) node);
     }
+    else evaluateType(node);
   }
 
   private void browseProgramNode(ProgramNode programNode){
@@ -82,12 +84,20 @@ public class SemanticAnalyzer {
     if(node == null || node instanceof EmptyNode) return "VOID";
 
     if(node instanceof IntNode) return "INT";
-    else if(node instanceof FloatNode) return "FLOAT";
-    else if(node instanceof StringNode) return "STRING";
-    else if (node instanceof BoolNode) return "BOOL";
+    if(node instanceof FloatNode) return "FLOAT";
+    if(node instanceof StringNode) return "STRING";
+    if (node instanceof BoolNode) return "BOOL";
+
+    if(node instanceof IdNode){
+      String name = ((IdNode) node).getName();
+      String type = symbolTable.containsType(name);
+      if(type == null){
+        System.err.println("ScopeError");
+      }
+      return type;
+    }
 
     return "";
-
   }
 
 }
