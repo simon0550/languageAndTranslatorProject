@@ -1,6 +1,7 @@
 package compiler.SemanticAnalyser;
 
 import compiler.Parser.AssignmentNode;
+import compiler.Parser.BinaryNode;
 import compiler.Parser.BoolNode;
 import compiler.Parser.DeclarationNode;
 import compiler.Parser.EmptyNode;
@@ -93,11 +94,40 @@ public class SemanticAnalyzer {
       String type = symbolTable.containsType(name);
       if(type == null){
         System.err.println("ScopeError");
+        System.exit(2);
       }
       return type;
     }
 
-    return "";
+    if(node instanceof BinaryNode){
+      BinaryNode binaryNode = (BinaryNode) node; // Récupère getter
+      String leftType = evaluateType(binaryNode.getLeft()); // Renvoie un IdNode
+      String rightType = evaluateType(binaryNode.getRight());
+      String operator = binaryNode.getOperator();
+
+      // Transformer un INT en FLOAT si l'un deux deux est FLOAT, INT sinon
+      if(operator.equals("+") || operator.equals("-") || operator.equals("*") || operator.equals("/") || operator.equals("%")){
+        if(leftType.equals("INT") || leftType.equals("FLOAT") && rightType.equals("INT") || rightType.equals("FLOAT")) {
+          if(leftType.equals("FLOAT") || rightType.equals("FLOAT")) return "FLOAT";
+          return "INT";
+        }
+        System.err.println("OperatorError");
+        System.exit(2);
+      }
+
+      if(operator.equals("&&") || operator.equals("||")){
+        if(leftType.equals("BOOL") && rightType.equals("BOOL")) return "BOOL";
+        System.err.println("OperatorError");
+        System.exit(2);
+      }
+
+      if (operator.equals("==") || operator.equals("=/=") || operator.equals("<") || operator.equals(">") || operator.equals("<=") || operator.equals(">=")) {
+        if (leftType.equals(rightType)) return "BOOL";
+        System.err.println("OperatorError");
+        System.exit(2);
+      }
+    }
+    throw new RuntimeException();
   }
 
 }

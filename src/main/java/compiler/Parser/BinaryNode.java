@@ -11,6 +11,18 @@ public class BinaryNode extends Node {
     this.right = right;
   }
 
+  public String getOperator() {
+    return operator;
+  }
+
+  public Node getLeft() {
+    return left;
+  }
+
+  public Node getRight() {
+    return right;
+  }
+
   private String getOperatorCategory() {
     switch (operator) {
       case "+":
