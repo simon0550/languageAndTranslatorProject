@@ -21,7 +21,6 @@ public class SymbolTable {
   public void addNewScope(){
     stackScopes.push(new HashMap<>());
     stackFinals.push(new HashMap<>());
-    // On pourrait rajouter les comportements ici ?
   }
 
   public void removeScope(){
@@ -31,9 +30,15 @@ public class SymbolTable {
     }
   }
 
-  public void addNewVariable(String name, String type, boolean isFinal){
-    stackScopes.peek().put(name,type);
-    stackFinals.peek().put(name,isFinal);
+  public boolean addNewVariable(String name, String type, boolean isFinal){
+    if (stackScopes.peek().containsKey(name)) {
+      return false;
+    }
+
+    stackScopes.peek().put(name, type);
+    stackFinals.peek().put(name, isFinal);
+
+    return true;
   }
 
   public String containsType(String name){

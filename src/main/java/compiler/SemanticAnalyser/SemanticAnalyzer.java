@@ -13,6 +13,7 @@ import compiler.Parser.LocalBlockNode;
 import compiler.Parser.Node;
 import compiler.Parser.ProgramNode;
 import compiler.Parser.StringNode;
+import compiler.Parser.TypeNode;
 import compiler.Parser.WhileNode;
 
 public class SemanticAnalyzer {
@@ -58,8 +59,49 @@ public class SemanticAnalyzer {
     }
   }
 
-  private void browseAssignmentNode(AssignmentNode assignmentNode){
+  private void browseAssignmentNode(AssignmentNode assignmentNode) {
+    String typeCoteGauche = "";
+    String nomVariable = "";
 
+    if (assignmentNode.getIdentifier() instanceof IdNode) {
+      nomVariable = ((IdNode) assignmentNode.getIdentifier()).getName();
+    } else {
+      return;
+    }
+
+    if (!(assignmentNode.getType() instanceof EmptyNode)) {
+      String typeDeclare = ((TypeNode) assignmentNode.getType()).getTypeName();
+
+      if (!symbolTable.addNewVariable(nomVariable, typeDeclare, assignmentNode.isFinal())) {
+        System.err.println("ScopeError");
+        System.exit(2);
+      }
+      typeCoteGauche = typeDeclare;
+    }
+
+    else {
+      String typeExistant = symbolTable.containsType(nomVariable);
+
+      if (typeExistant == null) {
+        System.err.println("ScopeError");
+        System.exit(2);
+      }
+
+      Boolean estFinal = symbolTable.variableIsFinal(nomVariable);
+      if (estFinal) {
+        System.err.println("ScopeError");
+        System.exit(2);
+      }
+
+      typeCoteGauche = typeExistant;
+    }
+
+    String typeCoteDroit = evaluateType(assignmentNode.getExpression());
+
+    if (!typeCoteGauche.equals(typeCoteDroit)) {
+      System.err.println("TypeError");
+      System.exit(2);
+    }
   }
 
   private void browseLocalBlockNode(LocalBlockNode localBlockNode){
