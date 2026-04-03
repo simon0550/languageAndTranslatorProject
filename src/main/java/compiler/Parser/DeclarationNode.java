@@ -20,6 +20,10 @@ public class DeclarationNode extends Node{
     return name;
   }
 
+  public boolean isFinal() {
+    return isFinal;
+  }
+
   @Override
   public String print(int depth) {
     String finalStr = isFinal ? "final " : "";

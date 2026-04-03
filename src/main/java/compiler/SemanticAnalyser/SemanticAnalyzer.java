@@ -67,17 +67,33 @@ public class SemanticAnalyzer {
   }
 
   private void browseIfNode(IfNode ifNode){
-
+    String conditionType = evaluateType(ifNode.getCondition());
+    if(!conditionType.equals("BOOL")){
+      System.err.println("MissingConditionError”");
+      System.exit(2);
+    }
+    browse(ifNode.getThenCaseBlock());
+    browse(ifNode.getElseCaseBlock());
   }
 
   private void browseWhileNode(WhileNode whileNode){
-
+    String conditionType = evaluateType(whileNode.getCondition());
+    if(!conditionType.equals("BOOL")){
+      System.err.println("MissingConditionError”");
+      System.exit(2);
+    }
+    browse(whileNode.getCodeInNode());
   }
 
   private void browseDeclarationNode(DeclarationNode declarationNode){
     String type = declarationNode.getType();
     String name = declarationNode.getName();
+    if (symbolTable.isDeclaredInCurrentScope(name)) {
+      System.err.println("ScopeError");
+      System.exit(2);
+    }
 
+    symbolTable.addNewVariable(name, type, declarationNode.isFinal());
   }
 
   // Méthode qui renvoie le type du noeud à remonter
