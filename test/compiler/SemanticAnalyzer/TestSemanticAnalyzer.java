@@ -36,10 +36,50 @@ public class TestSemanticAnalyzer extends TestCase {
 
     try {
       semanticAnalyzer.analyseTree(ast);
-      System.out.println("Succès : Le code est sémantiquement correct !\n");
+      System.out.println("Succès !\n");
     } catch (Exception e) {
-      System.err.println("Échec : Une exception inattendue a été levée.");
+      System.err.println("Échec");
       e.printStackTrace();
     }
+  }
+
+  public void testSemanticTypeError() {
+    System.out.println("--- Exécution du test TypeError ---");
+    System.out.println("ATTENDU : Le programme doit afficher TypeError et s'arrêter");
+
+    String code = "def main() {\n"
+        + "    INT age = 25;\n"
+        + "    age = \"vingt-cinq\"; # L'erreur est ici\n"
+        + "}";
+
+    Reader reader = new StringReader(code);
+    Lexer lexer = new Lexer(reader);
+    Parser parser = new Parser(lexer);
+    Node ast = parser.getAST();
+
+    SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
+    semanticAnalyzer.analyseTree(ast);
+
+    System.err.println("ÉCHEC : Le compilateur a laissé passer une erreur de type !");
+  }
+
+  public void testSemanticScopeError() {
+    System.out.println("--- Exécution du test ScopeError ---");
+    System.out.println("ATTENDU : Le programme doit afficher ScopeError et s'arrêter.");
+
+    String code = "def main() {\n"
+        + "    INT x = 10;\n"
+        + "    FLOAT x = 3.14; # L'erreur est ici, x existe déjà\n"
+        + "}";
+
+    Reader reader = new StringReader(code);
+    Lexer lexer = new Lexer(reader);
+    Parser parser = new Parser(lexer);
+    Node ast = parser.getAST();
+
+    SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
+    semanticAnalyzer.analyseTree(ast);
+
+    System.err.println("ÉCHEC : Le compilateur a autorisé une double déclaration !");
   }
 }
