@@ -16,6 +16,22 @@ public class FunctionNode extends Node{
     this.body = body;
   }
 
+  public String getName() {
+    return name;
+  }
+
+  public List<Node> getParameters() {
+    return parameters;
+  }
+
+  public String getRetType() {
+    return retType;
+  }
+
+  public Node getBody() {
+    return body;
+  }
+
   @Override
   public String print(int depth) {
     StringBuilder sb = new StringBuilder();

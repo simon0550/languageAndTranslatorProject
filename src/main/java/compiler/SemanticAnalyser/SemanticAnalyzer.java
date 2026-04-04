@@ -6,11 +6,13 @@ import compiler.Parser.BoolNode;
 import compiler.Parser.DeclarationNode;
 import compiler.Parser.EmptyNode;
 import compiler.Parser.FloatNode;
+import compiler.Parser.FunctionNode;
 import compiler.Parser.IdNode;
 import compiler.Parser.IfNode;
 import compiler.Parser.IntNode;
 import compiler.Parser.LocalBlockNode;
 import compiler.Parser.Node;
+import compiler.Parser.ParameterNode;
 import compiler.Parser.ProgramNode;
 import compiler.Parser.StringNode;
 import compiler.Parser.TypeNode;
@@ -33,6 +35,10 @@ public class SemanticAnalyzer {
 
     else if(node instanceof AssignmentNode){
       browseAssignmentNode((AssignmentNode) node);
+    }
+
+    else if(node instanceof FunctionNode){
+      browseFunctionNode((FunctionNode) node); // 👈 On ajoute ce cas
     }
 
     else if (node instanceof LocalBlockNode){
@@ -104,6 +110,31 @@ public class SemanticAnalyzer {
     }
   }
 
+  private void browseFunctionNode(FunctionNode functionNode) {
+    symbolTable.addNewScope();
+
+    if (functionNode.getParameters() != null) {
+      for (Node param : functionNode.getParameters()) {
+
+        if (param instanceof ParameterNode) {
+          ParameterNode paramNode = (ParameterNode) param;
+          String paramType = paramNode.getType();
+          String paramName = paramNode.getName();
+
+          if (!symbolTable.addNewVariable(paramName, paramType, false)) {
+            System.err.println("ScopeError");
+            System.exit(2);
+          }
+        }
+      }
+    }
+    if (functionNode.getBody() != null) {
+      browse(functionNode.getBody());
+    }
+
+    symbolTable.removeScope();
+  }
+
   private void browseLocalBlockNode(LocalBlockNode localBlockNode){
     symbolTable.addNewScope();
     for(Node node : localBlockNode.getLocalNodes()){
@@ -115,7 +146,7 @@ public class SemanticAnalyzer {
   private void browseIfNode(IfNode ifNode){
     String conditionType = evaluateType(ifNode.getCondition());
     if(!conditionType.equals("BOOL")){
-      System.err.println("MissingConditionError”");
+      System.err.println("MissingConditionError");
       System.exit(2);
     }
     browse(ifNode.getThenCaseBlock());
@@ -125,7 +156,7 @@ public class SemanticAnalyzer {
   private void browseWhileNode(WhileNode whileNode){
     String conditionType = evaluateType(whileNode.getCondition());
     if(!conditionType.equals("BOOL")){
-      System.err.println("MissingConditionError”");
+      System.err.println("MissingConditionError");
       System.exit(2);
     }
     browse(whileNode.getCodeInNode());
@@ -189,7 +220,7 @@ public class SemanticAnalyzer {
         System.exit(2);
       }
     }
-    throw new RuntimeException();
+    throw new RuntimeException("Noeud non géré dans evaluateType : " + node.getClass().getSimpleName());
   }
 
 }
