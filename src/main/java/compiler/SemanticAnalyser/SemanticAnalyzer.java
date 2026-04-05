@@ -38,7 +38,7 @@ public class SemanticAnalyzer {
     }
 
     else if(node instanceof FunctionNode){
-      browseFunctionNode((FunctionNode) node); // 👈 On ajoute ce cas
+      browseFunctionNode((FunctionNode) node);
     }
 
     else if (node instanceof LocalBlockNode){
@@ -56,6 +56,11 @@ public class SemanticAnalyzer {
     else if(node instanceof DeclarationNode){
       browseDeclarationNode((DeclarationNode) node);
     }
+
+    else if(node.getClass().getSimpleName().equals("CommentNode")){
+      return;
+    }
+
     else evaluateType(node);
   }
 
@@ -200,7 +205,7 @@ public class SemanticAnalyzer {
 
       // Transformer un INT en FLOAT si l'un deux deux est FLOAT, INT sinon
       if(operator.equals("+") || operator.equals("-") || operator.equals("*") || operator.equals("/") || operator.equals("%")){
-        if(leftType.equals("INT") || leftType.equals("FLOAT") && rightType.equals("INT") || rightType.equals("FLOAT")) {
+        if((leftType.equals("INT") || leftType.equals("FLOAT")) && (rightType.equals("INT") || rightType.equals("FLOAT"))) {
           if(leftType.equals("FLOAT") || rightType.equals("FLOAT")) return "FLOAT";
           return "INT";
         }

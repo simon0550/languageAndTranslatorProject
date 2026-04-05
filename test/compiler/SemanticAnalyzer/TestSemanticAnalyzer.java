@@ -82,4 +82,43 @@ public class TestSemanticAnalyzer extends TestCase {
 
     System.err.println("ÉCHEC : Le compilateur a autorisé une double déclaration !");
   }
+
+  public void testSemanticOperatorError() {
+    System.out.println("--- Exécution du test OperatorError ---");
+    System.out.println("ATTENDU : Le programme doit afficher OperatorError et s'arrêter.");
+
+    String code = "def main() {\n"
+        + "    INT calcul = 5 + \"pommes\"; # L'erreur est ici\n"
+        + "}";
+
+    Reader reader = new StringReader(code);
+    Lexer lexer = new Lexer(reader);
+    Parser parser = new Parser(lexer);
+    Node ast = parser.getAST();
+
+    SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
+    semanticAnalyzer.analyseTree(ast);
+
+    System.err.println("ÉCHEC : Le compilateur a autorisé un calcul invalide !");
+  }
+
+  public void testSemanticFinalReassignment() {
+    System.out.println("--- Exécution du test Final Reassignment ---");
+    System.out.println("ATTENDU : Le programme doit afficher ScopeError");
+
+    String code = "def main() {\n"
+        + "    final INT max = 100;\n"
+        + "    max = 200;\n"
+        + "}";
+
+    Reader reader = new StringReader(code);
+    Lexer lexer = new Lexer(reader);
+    Parser parser = new Parser(lexer);
+    Node ast = parser.getAST();
+
+    SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
+    semanticAnalyzer.analyseTree(ast);
+
+    System.err.println("ÉCHEC");
+  }
 }
