@@ -85,7 +85,7 @@ public class TestSemanticAnalyzer extends TestCase {
 
   public void testSemanticOperatorError() {
     System.out.println("--- Exécution du test OperatorError ---");
-    System.out.println("ATTENDU : Le programme doit afficher OperatorError et s'arrêter.");
+    System.out.println("ATTENDU : Le programme doit afficher OperatorError et s'arrêter");
 
     String code = "def main() {\n"
         + "    INT calcul = 5 + \"pommes\"; # L'erreur est ici\n"
@@ -109,6 +109,47 @@ public class TestSemanticAnalyzer extends TestCase {
     String code = "def main() {\n"
         + "    final INT max = 100;\n"
         + "    max = 200;\n"
+        + "}";
+
+    Reader reader = new StringReader(code);
+    Lexer lexer = new Lexer(reader);
+    Parser parser = new Parser(lexer);
+    Node ast = parser.getAST();
+
+    SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
+    semanticAnalyzer.analyseTree(ast);
+
+    System.err.println("ÉCHEC");
+  }
+
+  public void testSemanticMissingConditionError() {
+    System.out.println("--- Exécution du test MissingConditionError ---");
+    System.out.println("ATTENDU : Le programme doit afficher MissingConditionError");
+
+    String code = "def main() {\n"
+        + "    INT x = 10;\n"
+        + "    if (x) {\n"
+        + "        x = 5;\n"
+        + "    }\n"
+        + "}";
+
+    Reader reader = new StringReader(code);
+    Lexer lexer = new Lexer(reader);
+    Parser parser = new Parser(lexer);
+    Node ast = parser.getAST();
+
+    SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
+    semanticAnalyzer.analyseTree(ast);
+
+    System.err.println("ÉCHEC");
+  }
+
+  public void testSemanticUndeclaredVariable() {
+    System.out.println("--- Exécution du test Variable non déclarée ---");
+    System.out.println("ATTENDU : Le programme doit afficher ScopeError");
+
+    String code = "def main() {\n"
+        + "    INT x = y + 5;\n"
         + "}";
 
     Reader reader = new StringReader(code);
