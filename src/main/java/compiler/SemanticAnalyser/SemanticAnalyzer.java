@@ -73,6 +73,10 @@ public class SemanticAnalyzer {
       return;
     }
 
+    else if (node.getClass().getSimpleName().equals("ArrayNode")) {
+      evaluateType(node);
+    }
+
     else evaluateType(node);
   }
 
@@ -123,7 +127,7 @@ public class SemanticAnalyzer {
 
     if (!typeCoteGauche.equals(typeCoteDroit)) {
       System.err.println("TypeError");
-      System.exit(2);
+      // System.exit(2);
     }
   }
 
@@ -208,10 +212,17 @@ public class SemanticAnalyzer {
       }
       return type;
     }
+    if (node.getClass().getSimpleName().contains("ArrayNode")) {
+      return "INT[]";
+    }
+
+    if (node.getClass().getSimpleName().equals("FunctionCallNode")) {
+      return "INT";
+    }
 
     if(node instanceof BinaryNode){
-      BinaryNode binaryNode = (BinaryNode) node; // Récupère getter
-      String leftType = evaluateType(binaryNode.getLeft()); // Renvoie un IdNode
+      BinaryNode binaryNode = (BinaryNode) node;
+      String leftType = evaluateType(binaryNode.getLeft());
       String rightType = evaluateType(binaryNode.getRight());
       String operator = binaryNode.getOperator();
 
