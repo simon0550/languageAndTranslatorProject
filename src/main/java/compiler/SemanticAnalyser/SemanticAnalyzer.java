@@ -65,6 +65,14 @@ public class SemanticAnalyzer {
       return;
     }
 
+    else if (node.getClass().getSimpleName().contains("ForNode")) {
+      return;
+    }
+
+    else if (node.getClass().getSimpleName().contains("ReturnNode")) {
+      return;
+    }
+
     else evaluateType(node);
   }
 
