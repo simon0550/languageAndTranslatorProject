@@ -4,6 +4,10 @@ public class TypeNode extends Node{
 
   private String type;
 
+  public String getTypeName() {
+    return type;
+  }
+
   public TypeNode(String type) {
     this.type = type;
   }

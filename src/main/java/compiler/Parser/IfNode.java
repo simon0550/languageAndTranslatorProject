@@ -11,6 +11,17 @@ public class IfNode extends Node{
     this.thenCaseBlock = thenCaseBlock;
   }
 
+  public Node getCondition() {
+    return condition;
+  }
+
+  public Node getThenCaseBlock() {
+    return thenCaseBlock;
+  }
+
+  public Node getElseCaseBlock() {
+    return elseCaseBlock;
+  }
 
   @Override
   public String print(int depth) {

@@ -10,6 +10,10 @@ public class ProgramNode extends Node {
         this.declarations = declarations;
     }
 
+    public List<Node> getDeclarations() {
+        return this.declarations;
+    }
+
     @Override
     public String print(int depth) {
         StringBuilder res = new StringBuilder(indent(depth) + "ProgramNode:\n");
