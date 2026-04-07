@@ -61,6 +61,10 @@ public class SemanticAnalyzer {
       return;
     }
 
+    else if(node.getClass().getSimpleName().equals("CollectionDefNode")){
+      return;
+    }
+
     else evaluateType(node);
   }
 
