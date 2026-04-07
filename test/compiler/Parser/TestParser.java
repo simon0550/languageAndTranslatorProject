@@ -32,39 +32,27 @@ public class TestParser extends TestCase {
 
     public void testParser3_ComplexCode() {
         String code =
-                "INT seuil = 100;\n" +
-                        "BOOL isRunning = true;\n" +
+                "# Good luck\n" +
                         "\n" +
-                        "INT max(INT x, INT y) {\n" +
-                        "    if (x >= y) {\n" +
-                        "        RETURN x;\n" +
-                        "    } else {\n" +
-                        "        RETURN y;\n" +
-                        "    }\n" +
+                        " INT i = 3;\n" +
+                        " FLOAT j = 3.2*5.0;\n" +
+                        " INT k = i*3;\n" +
+                        " STRING message = \"Hello\";\n" +
+                        " BOOL isEmpty  = true;\n" +
+                        "\n" +
+                        
+                        "\n" +
+                        "INT a = 3;\n" +
+                        "INT[] c  = INT ARRAY [5] ;  # new ARRAY of length 5\n" +
+                        "Person d = Person(\"me\", Point(3,7), INT ARRAY [i*2] ); # new person\n" +
+                        "\n" +
+                        "def INT square(INT v) {\n" +
+                        "    return v*v;\n" +
                         "}\n" +
                         "\n" +
-                        "INT process(INT startValue) {\n" +
-                        "    INT current = startValue;\n" +
-                        "    INT iterations = 0;\n" +
-                        "    \n" +
-
-                        "    # ceci est une boucle while \n " +
-                        "while (current < seuil && isRunning == true) {\n" +
-                        "        current = (current + max(iterations, 5)) * 2;\n" +
-                        "        iterations = iterations + 1;\n" +
-                        "        \n" +
-                        "        if (iterations > 50 || current < 0) {\n" +
-                        "            isRunning = false;\n" +
-                        "        }\n" +
-                        "    }\n" +
-                        "    RETURN current;\n" +
-                        "}\n" +
-                        "\n" +
-                        "INT resultatFinal = process(10);\n" +
-                        "ARRAY FLOAT table = [0.1,2.0,4.0,6.0];\n" +
-                        "INT a = table[1];\n"+
-                        "table[5] = 1+1;\n"+
-                        "print(\"Le resultat est : \", resultatFinal);\n";
+                        "def Point copyPoints(Point[] p) {\n" +
+                        "    return Point(p[0].x+p[1].x, p[0].y+p[1].y);\n" +
+                        "}";
 
         try {
             Reader reader = new StringReader(code);
