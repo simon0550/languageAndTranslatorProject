@@ -7,6 +7,8 @@ public class SemanticAnalyzer {
   private SymbolTable symbolTable = new SymbolTable();
 
   public void analyseTree(Node root){
+    symbolTable.addNewVariable("read_INT", "INT", true);
+    symbolTable.addNewVariable("println", "VOID", true);
     browse(root);
   }
 
@@ -100,18 +102,11 @@ public class SemanticAnalyzer {
 
   private void browseFunctionNode(FunctionNode functionNode) {
     symbolTable.addNewScope();
-
     if (functionNode.getParameters() != null) {
       for (Node param : functionNode.getParameters()) {
         if (param instanceof ParameterNode) {
           ParameterNode paramNode = (ParameterNode) param;
-          String paramType = paramNode.getType();
-          String paramName = paramNode.getName();
-
-          if (!symbolTable.addNewVariable(paramName, paramType, false)) {
-            System.err.println("ScopeError");
-            System.exit(2);
-          }
+          symbolTable.addNewVariable(paramNode.getName(), paramNode.getType(), false);
         }
       }
     }
@@ -131,7 +126,7 @@ public class SemanticAnalyzer {
 
   private void browseIfNode(IfNode ifNode){
     String conditionType = evaluateType(ifNode.getCondition());
-    if(!conditionType.equals("BOOL")){
+    if(!conditionType.equals("BOOL") && !conditionType.equals("UNKNOWN")){
       System.err.println("MissingConditionError");
       System.exit(2);
     }
@@ -141,7 +136,7 @@ public class SemanticAnalyzer {
 
   private void browseWhileNode(WhileNode whileNode){
     String conditionType = evaluateType(whileNode.getCondition());
-    if(!conditionType.equals("BOOL")){
+    if(!conditionType.equals("BOOL") && !conditionType.equals("UNKNOWN")){
       System.err.println("MissingConditionError");
       System.exit(2);
     }
@@ -212,7 +207,7 @@ public class SemanticAnalyzer {
         System.exit(2);
       }
     }
-    throw new RuntimeException("Noeud non géré dans evaluateType : " + node.getClass().getSimpleName());
+    return "UNKNOWN";
   }
 
 }
