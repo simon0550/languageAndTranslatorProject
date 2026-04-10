@@ -3,7 +3,6 @@ package compiler.SemanticAnalyzer;
 import compiler.Lexer.Lexer;
 import compiler.Parser.Node;
 import compiler.Parser.Parser;
-import compiler.SemanticAnalyser.SemanticAnalyzer;
 
 import java.io.Reader;
 import java.io.StringReader;

@@ -1,4 +1,4 @@
-package compiler.SemanticAnalyser;
+package compiler.SemanticAnalyzer;
 
 import compiler.Parser.*;
 
