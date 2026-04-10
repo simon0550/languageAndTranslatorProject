@@ -7,6 +7,7 @@ public class SemanticAnalyzer {
   private SymbolTable symbolTable = new SymbolTable();
 
   public void analyseTree(Node root){
+    symbolTable.addNewScope();
     symbolTable.addNewVariable("read_INT", "INT", true);
     symbolTable.addNewVariable("println", "VOID", true);
     browse(root);
@@ -16,7 +17,7 @@ public class SemanticAnalyzer {
     if (node == null) return;
 
     if(node instanceof ProgramNode){
-      browseProgramNode((ProgramNode) node);
+      for(Node decl : ((ProgramNode) node).getDeclarations()) browse(decl);
     }
 
     else if(node instanceof AssignmentNode){
@@ -28,7 +29,7 @@ public class SemanticAnalyzer {
     }
 
     else if (node instanceof LocalBlockNode){
-      browseLocalBlockNode((LocalBlockNode) node);
+      for(Node subNode : ((LocalBlockNode) node).getLocalNodes()) browse(subNode);
     }
 
     else if (node instanceof IfNode){
@@ -39,28 +40,26 @@ public class SemanticAnalyzer {
       browseWhileNode((WhileNode) node);
     }
 
+    else if(node instanceof ForNode){
+      browseForNode((ForNode) node);
+    }
+
     else if(node instanceof DeclarationNode){
       browseDeclarationNode((DeclarationNode) node);
     }
 
-    else if(node.getClass().getSimpleName().contains("CommentNode") ||
-        node.getClass().getSimpleName().contains("CollectionDefNode") ||
-        node.getClass().getSimpleName().contains("ForNode") ||
-        node.getClass().getSimpleName().contains("ReturnNode")) {
-      return;
+    else if(node instanceof ReturnNode){
+      evaluateType(((ReturnNode)node).getExpression());
     }
 
+    else if(node.getClass().getSimpleName().contains("CommentNode") ||
+        node.getClass().getSimpleName().contains("CollectionDefNode")) {
+      return;
+    }
     else evaluateType(node);
   }
 
-  private void browseProgramNode(ProgramNode programNode){
-    for(Node node : programNode.getDeclarations()){
-      browse(node);
-    }
-  }
-
   private void browseAssignmentNode(AssignmentNode assignmentNode) {
-    String typeCoteGauche = "";
     String nomVariable = "";
 
     if (assignmentNode.getIdentifier() instanceof IdNode) {
@@ -70,30 +69,23 @@ public class SemanticAnalyzer {
       return;
     }
 
+    String typeCoteGauche = "";
     if (!(assignmentNode.getType() instanceof EmptyNode)) {
-      String typeDeclare = ((TypeNode) assignmentNode.getType()).getTypeName();
-      if (!symbolTable.addNewVariable(nomVariable, typeDeclare, assignmentNode.isFinal())) {
+      typeCoteGauche = ((TypeNode) assignmentNode.getType()).getTypeName();
+      if (!symbolTable.addNewVariable(nomVariable, typeCoteGauche, assignmentNode.isFinal())) {
         System.err.println("ScopeError");
         System.exit(2);
       }
-      typeCoteGauche = typeDeclare;
     }
     else {
-      String typeExistant = symbolTable.containsType(nomVariable);
-      if (typeExistant == null) {
+      typeCoteGauche = symbolTable.containsType(nomVariable);
+      if (typeCoteGauche == null || symbolTable.variableIsFinal(nomVariable)) {
         System.err.println("ScopeError");
         System.exit(2);
       }
-      if (symbolTable.variableIsFinal(nomVariable)) {
-        System.err.println("ScopeError");
-        System.exit(2);
-      }
-
-      typeCoteGauche = typeExistant;
     }
 
     String typeCoteDroit = evaluateType(assignmentNode.getExpression());
-
     if (!typeCoteGauche.equals(typeCoteDroit) && !typeCoteDroit.equals("UNKNOWN")) {
       System.err.println("TypeError");
       System.exit(2);
@@ -104,23 +96,11 @@ public class SemanticAnalyzer {
     symbolTable.addNewScope();
     if (functionNode.getParameters() != null) {
       for (Node param : functionNode.getParameters()) {
-        if (param instanceof ParameterNode) {
-          ParameterNode paramNode = (ParameterNode) param;
-          symbolTable.addNewVariable(paramNode.getName(), paramNode.getType(), false);
-        }
+        ParameterNode paramNode = (ParameterNode) param;
+        symbolTable.addNewVariable(paramNode.getName(), paramNode.getType(), false);
       }
     }
-    if (functionNode.getBody() != null) {
-      browse(functionNode.getBody());
-    }
-    symbolTable.removeScope();
-  }
-
-  private void browseLocalBlockNode(LocalBlockNode localBlockNode){
-    symbolTable.addNewScope();
-    for(Node node : localBlockNode.getLocalNodes()){
-      browse(node);
-    }
+    browse(functionNode.getBody());
     symbolTable.removeScope();
   }
 
@@ -143,14 +123,27 @@ public class SemanticAnalyzer {
     browse(whileNode.getCodeInNode());
   }
 
+  private void browseForNode(ForNode forNode){
+    symbolTable.addNewScope();
+
+    browse(forNode.getInit());
+    evaluateType(forNode.getStart());
+    evaluateType(forNode.getEnd());
+    evaluateType(forNode.getStep());
+    browse(forNode.getBody());
+
+    symbolTable.removeScope();
+  }
+
   private void browseDeclarationNode(DeclarationNode declarationNode){
-    String type = declarationNode.getType();
+    String type = "";
+    type = declarationNode.getType();
+
     String name = declarationNode.getName();
     if (symbolTable.isDeclaredInCurrentScope(name)) {
       System.err.println("ScopeError");
       System.exit(2);
     }
-
     symbolTable.addNewVariable(name, type, declarationNode.isFinal());
   }
 
