@@ -1,22 +1,6 @@
 package compiler.SemanticAnalyser;
 
-import compiler.Parser.AssignmentNode;
-import compiler.Parser.BinaryNode;
-import compiler.Parser.BoolNode;
-import compiler.Parser.DeclarationNode;
-import compiler.Parser.EmptyNode;
-import compiler.Parser.FloatNode;
-import compiler.Parser.FunctionNode;
-import compiler.Parser.IdNode;
-import compiler.Parser.IfNode;
-import compiler.Parser.IntNode;
-import compiler.Parser.LocalBlockNode;
-import compiler.Parser.Node;
-import compiler.Parser.ParameterNode;
-import compiler.Parser.ProgramNode;
-import compiler.Parser.StringNode;
-import compiler.Parser.TypeNode;
-import compiler.Parser.WhileNode;
+import compiler.Parser.*;
 
 public class SemanticAnalyzer {
 
@@ -57,24 +41,11 @@ public class SemanticAnalyzer {
       browseDeclarationNode((DeclarationNode) node);
     }
 
-    else if(node.getClass().getSimpleName().equals("CommentNode")){
+    else if(node.getClass().getSimpleName().contains("CommentNode") ||
+        node.getClass().getSimpleName().contains("CollectionDefNode") ||
+        node.getClass().getSimpleName().contains("ForNode") ||
+        node.getClass().getSimpleName().contains("ReturnNode")) {
       return;
-    }
-
-    else if(node.getClass().getSimpleName().equals("CollectionDefNode")){
-      return;
-    }
-
-    else if (node.getClass().getSimpleName().contains("ForNode")) {
-      return;
-    }
-
-    else if (node.getClass().getSimpleName().contains("ReturnNode")) {
-      return;
-    }
-
-    else if (node.getClass().getSimpleName().equals("ArrayNode")) {
-      evaluateType(node);
     }
 
     else evaluateType(node);
@@ -82,7 +53,7 @@ public class SemanticAnalyzer {
 
   private void browseProgramNode(ProgramNode programNode){
     for(Node node : programNode.getDeclarations()){
-      browse(node); // Appel récursif (on s'enfonce dans l'arbre)
+      browse(node);
     }
   }
 
@@ -93,29 +64,25 @@ public class SemanticAnalyzer {
     if (assignmentNode.getIdentifier() instanceof IdNode) {
       nomVariable = ((IdNode) assignmentNode.getIdentifier()).getName();
     } else {
+      evaluateType(assignmentNode.getExpression());
       return;
     }
 
     if (!(assignmentNode.getType() instanceof EmptyNode)) {
       String typeDeclare = ((TypeNode) assignmentNode.getType()).getTypeName();
-
       if (!symbolTable.addNewVariable(nomVariable, typeDeclare, assignmentNode.isFinal())) {
         System.err.println("ScopeError");
         System.exit(2);
       }
       typeCoteGauche = typeDeclare;
     }
-
     else {
       String typeExistant = symbolTable.containsType(nomVariable);
-
       if (typeExistant == null) {
         System.err.println("ScopeError");
         System.exit(2);
       }
-
-      Boolean estFinal = symbolTable.variableIsFinal(nomVariable);
-      if (estFinal) {
+      if (symbolTable.variableIsFinal(nomVariable)) {
         System.err.println("ScopeError");
         System.exit(2);
       }
@@ -125,9 +92,9 @@ public class SemanticAnalyzer {
 
     String typeCoteDroit = evaluateType(assignmentNode.getExpression());
 
-    if (!typeCoteGauche.equals(typeCoteDroit)) {
+    if (!typeCoteGauche.equals(typeCoteDroit) && !typeCoteDroit.equals("UNKNOWN")) {
       System.err.println("TypeError");
-      // System.exit(2);
+      System.exit(2);
     }
   }
 
@@ -136,7 +103,6 @@ public class SemanticAnalyzer {
 
     if (functionNode.getParameters() != null) {
       for (Node param : functionNode.getParameters()) {
-
         if (param instanceof ParameterNode) {
           ParameterNode paramNode = (ParameterNode) param;
           String paramType = paramNode.getType();
@@ -152,7 +118,6 @@ public class SemanticAnalyzer {
     if (functionNode.getBody() != null) {
       browse(functionNode.getBody());
     }
-
     symbolTable.removeScope();
   }
 
@@ -194,7 +159,6 @@ public class SemanticAnalyzer {
     symbolTable.addNewVariable(name, type, declarationNode.isFinal());
   }
 
-  // Méthode qui renvoie le type du noeud à remonter
   private String evaluateType(Node node){
     if(node == null || node instanceof EmptyNode) return "VOID";
 
@@ -212,19 +176,19 @@ public class SemanticAnalyzer {
       }
       return type;
     }
-    if (node.getClass().getSimpleName().contains("ArrayNode")) {
-      return "INT[]";
-    }
 
-    if (node.getClass().getSimpleName().equals("FunctionCallNode")) {
-      return "INT";
-    }
+    String className = node.getClass().getSimpleName();
+    if (className.contains("ArrayNode")) return "UNKNOWN";
+    if (className.contains("FunctionCallNode")) return "UNKNOWN";
+    if (className.contains("AccessNode") || className.contains("Constructor")) return "UNKNOWN";
 
     if(node instanceof BinaryNode){
       BinaryNode binaryNode = (BinaryNode) node;
       String leftType = evaluateType(binaryNode.getLeft());
       String rightType = evaluateType(binaryNode.getRight());
       String operator = binaryNode.getOperator();
+
+      if (leftType.equals("UNKNOWN") || rightType.equals("UNKNOWN")) return "UNKNOWN";
 
       // Transformer un INT en FLOAT si l'un deux deux est FLOAT, INT sinon
       if(operator.equals("+") || operator.equals("-") || operator.equals("*") || operator.equals("/") || operator.equals("%")){
