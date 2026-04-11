@@ -1,4 +1,4 @@
-package compiler.SemanticAnalyser;
+package compiler.SemanticAnalyzer;
 
 import java.util.HashMap;
 import java.util.Map;

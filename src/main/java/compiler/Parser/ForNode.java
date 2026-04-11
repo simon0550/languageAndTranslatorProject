@@ -16,6 +16,12 @@ public class ForNode extends Node{
     this.body = body;
   }
 
+  public Node getInit() { return init; }
+  public Node getStart() { return start; }
+  public Node getEnd() { return end; }
+  public Node getStep() { return step; }
+  public Node getBody() { return body; }
+
   @Override
   public String print(int depth) {
     return indent(depth) + "ForNode\n" +

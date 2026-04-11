@@ -9,6 +9,9 @@ public class  ReturnNode extends Node{
     this.expression = expression;
   }
 
+  public Node getExpression() {
+    return expression;
+  }
 
   @Override
   public String print(int depth) {
