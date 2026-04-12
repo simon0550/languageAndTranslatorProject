@@ -2,6 +2,8 @@ package compiler.SemanticAnalyzer;
 
 import compiler.Parser.*;
 
+import java.util.List;
+
 public class SemanticAnalyzer {
 
   private SymbolTable symbolTable = new SymbolTable();
@@ -55,17 +57,63 @@ public class SemanticAnalyzer {
     else if(node instanceof CollectionDeclarationNode) {
       browseCollectionDeclaration((CollectionDeclarationNode) node);
     }
+    else if(node instanceof CollectionDefNode) {
+      browseCollectionDefNode((CollectionDefNode) node);
+    }
     else if(node instanceof TableAssignmentNode) {
       browseTableAssignment((TableAssignmentNode) node);
-    }
-    else if(node.getClass().getSimpleName().contains("CommentNode")) {
+
+    } else if (node instanceof  FunctionCallNode) {
+      browseFunctionCall((FunctionCallNode) node);
+    } else if(node.getClass().getSimpleName().contains("CommentNode")) {
       return;
     }
     else evaluateType(node);
   }
+  private void browseFunctionCall(FunctionCallNode node) {
+    String fname = node.getName();
+    if (symbolTable.containsType(fname) == null) {
+      System.err.println("ScopeError");
+      System.exit(2);
+    }
+    List<Node> params = node.getParams();
+    for (Node param : params) {
+      evaluateType(param);
+    }
+  }
+
+  private void browseCollectionDefNode(CollectionDefNode node) {
+    String collName = node.getName();
+
+    if (!Character.isUpperCase(collName.charAt(0))) {
+      System.err.println("CollectionError");
+      System.exit(2);
+    }
+
+    if (collName.equals("INT") || collName.equals("FLOAT") ||
+            collName.equals("STRING") || collName.equals("BOOL") ||
+            collName.equals("while") || collName.equals("if") ||
+            collName.equals("def") || collName.equals("return") || collName.equals("coll")) {
+      System.err.println("CollectionError");
+      System.exit(2);
+    }
+
+    if (symbolTable.isDeclaredInCurrentScope(collName)) {
+      System.err.println("CollectionError");
+      System.exit(2);
+    }
+
+    symbolTable.addNewVariable(collName, "TYPE_DEF", true);
+
+    symbolTable.addNewScope();
+    for (Node field : node.getProperties()) {
+      browse(field);
+    }
+    symbolTable.removeScope();
+  }
 
   private void browseCollectionDeclaration(CollectionDeclarationNode node) {
-    String type = node.getType().toString();
+    String type = ((TypeNode) node.getType()).getTypeName();
     String name = ((IdNode) node.getName()).getName();
 
     if (symbolTable.isDeclaredInCurrentScope(name)) {
@@ -212,11 +260,39 @@ public class SemanticAnalyzer {
     }
 
     String className = node.getClass().getSimpleName();
-    if (className.contains("ArrayNode")) return "UNKNOWN";
-    if (className.contains("FunctionCallNode")) return "UNKNOWN";
-    if (node instanceof TableAccessNode) {
-      TableAccessNode accessNode = (TableAccessNode) node;
-      String arrayName = String.valueOf(accessNode.getName()); // À adapter selon tes getters
+    if (node instanceof ArrayLiteralNode) {
+      ArrayLiteralNode arrayNode = (ArrayLiteralNode) node;
+      if (arrayNode.getElements().isEmpty()) return "UNKNOWN[]";
+
+      String firstElementType = evaluateType(arrayNode.getElements().get(0));
+
+      for (Node element : arrayNode.getElements()) {
+        String elemType = evaluateType(element);
+        if (!elemType.equals(firstElementType) && !elemType.equals("UNKNOWN")) {
+          System.err.println("CollectionError");
+          System.exit(2);
+        }
+      }
+      return firstElementType + "[]";
+    }
+
+    if (node instanceof ArrayNode) {
+      ArrayNode arrNode = (ArrayNode) node;
+      String sizeType = evaluateType(arrNode.getSize());
+      if (!sizeType.equals("INT") && !sizeType.equals("UNKNOWN")) {
+        System.err.println("CollectionError");
+        System.exit(2);
+      }
+      return arrNode.getType() + "[]";
+    }
+
+    if (node instanceof FunctionCallNode){
+
+      return "UNKNOWN";
+    }
+
+    if (node instanceof TableAccessNode accessNode) {
+      String arrayName = String.valueOf(accessNode.getName());
 
       String arrayType = symbolTable.containsType(arrayName);
       if (arrayType == null) {
