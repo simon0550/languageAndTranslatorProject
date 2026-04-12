@@ -7,24 +7,59 @@ import compiler.Parser.Parser;
 import java.io.Reader;
 import java.io.StringReader;
 import junit.framework.TestCase;
+import org.junit.Test;
 
 public class TestSemanticAnalyzer extends TestCase {
 
   public void testSemanticValide() {
     System.out.println("--- Exécution du test valide ---");
 
-    String code = "final INT max = 100;\n"
-        + "INT score = 0;\n"
-        + "\n"
-        + "def main() {\n"
-        + "    INT i = 1;\n"
-        + "    while (i <= max) {\n"
-        + "        if (i % 2 == 0) {\n"
-        + "            score = score + i;\n"
-        + "        }\n"
-        + "        i = i + 1;\n"
-        + "    }\n"
-        + "}";
+    String code = "# Good luck\n" +
+            "\n" +
+            "final INT i = 3;\n" +
+            "final FLOAT j = 3.2*5.0;\n" +
+            "final INT k = i*3;\n" +
+            "final STRING message = \"Hello\";\n" +
+            "final BOOL isEmpty  = true;\n" +
+            "\n" +
+            "coll Point {\n" +
+            "    INT x;\n" +
+            "    INT y;\n" +
+            "}\n" +
+            "coll Person {\n" +
+            "    STRING name;\n" +
+            "    Point location;\n" +
+            "    INT[] history;\n" +
+            "}\n" +
+            "\n" +
+            "INT a = 3;\n" +
+            "INT[] c  = INT ARRAY [5] ;  # new ARRAY of length 5\n" +
+            "Person d = Person(\"me\", Point(3,7), INT ARRAY [i*2] ); # new person\n" +
+            "\n" +
+            "def INT square(INT v) {\n" +
+            "    return v*v;\n" +
+            "}\n" +
+            "\n" +
+            "def Point copyPoints(Point[] p) {\n" +
+            "    return Point(p[0].x+p[1].x, p[0].y+p[1].y);\n" +
+            "}\n" +
+            "\n" +
+            "def main() {\n" +
+            "    INT value = read_INT();\n" +
+            "    println(square(value));\n" +
+            "    INT i;\n" +
+            "    for (i; 1 -> 100; i+1) {\n" +
+            "        while (value=/=3) {\n" +
+            "            if (i > 10){\n" +
+            "                value = value - 1;\n" +
+            "            } else {\n" +
+            "                println(message);\n" +
+            "            }\n" +
+            "        }\n" +
+            "    }\n" +
+            "\n" +
+            "    i = (i+2)*2;\n" +
+            "}";
 
     Reader reader = new StringReader(code);
     Lexer lexer = new Lexer(reader);
@@ -217,5 +252,69 @@ public class TestSemanticAnalyzer extends TestCase {
 
     SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
     semanticAnalyzer.analyseTree(ast);
+  }
+  @Test
+  public void testFinalCodeValid() {
+    String code = "# Good luck\n" +
+            "final INT i = 3;\n" +
+            "final FLOAT j = 3.2*5.0;\n" +
+            "final INT k = i*3;\n" +
+            "final STRING message = \"Hello\";\n" +
+            "final BOOL isEmpty  = true;\n" +
+            "\n" +
+            "coll Point {\n" +
+            "    INT x;\n" +
+            "    INT y;\n" +
+            "}\n" +
+            "coll Person {\n" +
+            "    STRING name;\n" +
+            "    Point location;\n" +
+            "    INT[] history;\n" +
+            "}\n" +
+            "\n" +
+            "INT a = 3;\n" +
+            "INT[] c  = INT ARRAY [5];\n" +
+            "Person d = Person(\"me\", Point(3,7), INT ARRAY [i*2] );\n" +
+            "\n" +
+            "def INT square(INT v) {\n" +
+            "    return v*v;\n" +
+            "}\n" +
+            "\n" +
+            "def Point copyPoints(Point[] p) {\n" +
+            "    return Point(p[0].x+p[1].x, p[0].y+p[1].y);\n" +
+            "}\n" +
+            "\n" +
+            "def main() {\n" +
+            "    INT value = read_INT();\n" +
+            "    println(square(value));\n" +
+            "    INT i;\n" +
+            "    for (i; 1 -> 100; i+1) {\n" +
+            "        while (value=/=3) {\n" +
+            "            if (i > 10){\n" +
+            "                value = value - 1;\n" +
+            "            } else {\n" +
+            "                println(message);\n" +
+            "            }\n" +
+            "        }\n" +
+            "    }\n" +
+            "    i = (i+2)*2;\n" +
+            "}";
+
+    try {
+      Reader reader = new StringReader(code);
+      Lexer lexer = new Lexer(reader);
+      Parser parser = new Parser(lexer);
+      Node ast = parser.getAST();
+
+      SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
+      semanticAnalyzer.analyseTree(ast);
+
+      // Si on arrive jusqu'ici, c'est que ni le Parser ni le SemanticAnalyzer n'ont planté.
+      assertTrue("L'analyse sémantique s'est terminée avec succès", true);
+
+    } catch (Exception e) {
+      // Si une exception est levée, on force l'échec du test
+      fail("Le compilateur ne devrait pas crasher sur un code valide. Erreur : " + e.getMessage());
+    }
   }
 }

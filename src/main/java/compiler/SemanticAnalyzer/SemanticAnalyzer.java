@@ -52,11 +52,57 @@ public class SemanticAnalyzer {
       evaluateType(((ReturnNode)node).getExpression());
     }
 
-    else if(node.getClass().getSimpleName().contains("CommentNode") ||
-        node.getClass().getSimpleName().contains("CollectionDefNode")) {
+    else if(node instanceof CollectionDeclarationNode) {
+      browseCollectionDeclaration((CollectionDeclarationNode) node);
+    }
+    else if(node instanceof TableAssignmentNode) {
+      browseTableAssignment((TableAssignmentNode) node);
+    }
+    else if(node.getClass().getSimpleName().contains("CommentNode")) {
       return;
     }
     else evaluateType(node);
+  }
+
+  private void browseCollectionDeclaration(CollectionDeclarationNode node) {
+    String type = node.getType().toString();
+    String name = ((IdNode) node.getName()).getName();
+
+    if (symbolTable.isDeclaredInCurrentScope(name)) {
+      System.err.println("ScopeError");
+      System.exit(2);
+    }
+
+    symbolTable.addNewVariable(name, type + "[]", false);
+
+    for (Node element : node.getElements()) {
+      String elemType = evaluateType(element);
+      if (!elemType.equals(type) && !elemType.equals("UNKNOWN")) {
+        System.err.println("CollectionError");
+        System.exit(2);
+      }
+    }
+  }
+
+  private void browseTableAssignment(TableAssignmentNode node) {
+    String arrayName = node.getName().toString();
+    String arrayType = symbolTable.containsType(arrayName);
+    if (arrayType == null) {
+      System.err.println("ScopeError");
+      System.exit(2);
+    }
+    String indexType = evaluateType(node.getIndex());
+    if (!indexType.equals("INT") && !indexType.equals("UNKNOWN")) {
+      System.err.println("CollectionError");
+      System.exit(2);
+    }
+    String valueType = evaluateType(node.getValue());
+    String expectedType = arrayType.replace("[]", "").replace("ARRAY ", "");
+
+    if (!valueType.equals(expectedType) && !valueType.equals("UNKNOWN")) {
+      System.err.println("CollectionError");
+      System.exit(2);
+    }
   }
 
   private void browseAssignmentNode(AssignmentNode assignmentNode) {
@@ -168,7 +214,23 @@ public class SemanticAnalyzer {
     String className = node.getClass().getSimpleName();
     if (className.contains("ArrayNode")) return "UNKNOWN";
     if (className.contains("FunctionCallNode")) return "UNKNOWN";
-    if (className.contains("AccessNode") || className.contains("Constructor")) return "UNKNOWN";
+    if (node instanceof TableAccessNode) {
+      TableAccessNode accessNode = (TableAccessNode) node;
+      String arrayName = String.valueOf(accessNode.getName()); // À adapter selon tes getters
+
+      String arrayType = symbolTable.containsType(arrayName);
+      if (arrayType == null) {
+        System.err.println("ScopeError");
+        System.exit(2);
+      }
+
+      String indexType = evaluateType(accessNode.getValue());
+      if (!indexType.equals("INT") && !indexType.equals("UNKNOWN")) {
+        System.err.println("CollectionError");
+        System.exit(2);
+      }
+      return arrayType.replace("[]", "").replace("ARRAY ", "");
+    }
 
     if(node instanceof BinaryNode){
       BinaryNode binaryNode = (BinaryNode) node;

@@ -11,6 +11,18 @@ public class TableAssignmentNode extends Node {
         this.value = value;
     }
 
+    public Node getName() {
+        return name;
+    }
+
+    public Node getIndex() {
+        return index;
+    }
+
+    public Node getValue() {
+        return value;
+    }
+
     @Override
     public String print(int depth) {
         StringBuilder sb = new StringBuilder();

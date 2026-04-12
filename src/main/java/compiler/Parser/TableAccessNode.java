@@ -10,6 +10,14 @@ public class TableAccessNode extends Node {
         this.value = value;
     }
 
+    public Node getName() {
+        return name;
+    }
+
+    public Node getValue() {
+        return value;
+    }
+
     @Override
     public String print(int depth) {
         StringBuilder sb = new StringBuilder();

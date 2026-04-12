@@ -12,6 +12,18 @@ public class CollectionDeclarationNode extends Node{
     this.type = type;
   }
 
+  public Node getType() {
+    return type;
+  }
+
+  public Node getName() {
+    return name;
+  }
+
+  public List<Node> getElements() {
+    return elements;
+  }
+
   @Override
   public String print(int depth) {
     StringBuilder sb = new StringBuilder();
