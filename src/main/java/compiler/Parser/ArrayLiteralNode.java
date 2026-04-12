@@ -9,6 +9,10 @@ public class ArrayLiteralNode extends Node {
     this.elements = elements;
   }
 
+  public List<Node> getElements() {
+    return elements;
+  }
+
   @Override
   public String print(int depth) {
     StringBuilder sb = new StringBuilder();

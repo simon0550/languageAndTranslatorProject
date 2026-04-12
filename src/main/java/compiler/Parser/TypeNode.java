@@ -13,6 +13,9 @@ public class TypeNode extends Node{
     return type;
   }
 
+  public String getType() {
+    return type;
+  }
 
   @Override
   public String print(int depth) {

@@ -11,6 +11,14 @@ public class FunctionCallNode extends Node{
     this.params = params;
   }
 
+  public String getName() {
+    return name;
+  }
+
+  public List<Node> getParams() {
+    return params;
+  }
+
   @Override
   public String print(int depth) {
     StringBuilder sb = new StringBuilder();

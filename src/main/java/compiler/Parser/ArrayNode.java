@@ -9,6 +9,14 @@ public class ArrayNode extends Node {
     this.size = size;
   }
 
+  public String getType() {
+    return type;
+  }
+
+  public Node getSize() {
+    return size;
+  }
+
   @Override
   public String print(int depth) {
     return indent(depth) + "ArrayNode(" + type + ")\n" +

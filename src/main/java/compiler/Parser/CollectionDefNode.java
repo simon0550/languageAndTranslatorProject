@@ -12,6 +12,14 @@ public class CollectionDefNode extends Node{
     this.properties = properties;
   }
 
+  public List<Node> getProperties() {
+    return properties;
+  }
+
+  public String getName() {
+    return name;
+  }
+
   @Override
   public String print(int depth) {
     StringBuilder sb = new StringBuilder();
