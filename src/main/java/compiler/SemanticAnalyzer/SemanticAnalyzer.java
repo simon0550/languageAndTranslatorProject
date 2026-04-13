@@ -2,12 +2,16 @@ package compiler.SemanticAnalyzer;
 
 import compiler.Parser.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SemanticAnalyzer {
 
   private SymbolTable symbolTable = new SymbolTable();
   private String currentFunctionReturnType = null;
+  private Map<String, List<String>> typeParamList = new HashMap<>(); // On stocker dans cette map les types de paramètres
 
   public void analyseTree(Node root){
     symbolTable.addNewScope();
@@ -194,8 +198,18 @@ public class SemanticAnalyzer {
   }
 
   private void browseFunctionNode(FunctionNode functionNode) {
+    String name = functionNode.getName();
     String returnType = functionNode.getRetType();
-    symbolTable.addNewVariable(functionNode.getName(), returnType, true);
+
+    List<String> paramTypes = new ArrayList<>();
+    if (functionNode.getParameters() != null) {
+      for (Node parametre : functionNode.getParameters()) {
+        ParameterNode paramNode = (ParameterNode) parametre;
+        paramTypes.add(paramNode.getType());
+      }
+    }
+    typeParamList.put(name, paramTypes);
+    symbolTable.addNewVariable(name, returnType, true);
 
     String oldReturnType = currentFunctionReturnType;
     currentFunctionReturnType = returnType;
@@ -207,9 +221,9 @@ public class SemanticAnalyzer {
         symbolTable.addNewVariable(paramNode.getName(), paramNode.getType(), false);
       }
     }
+
     browse(functionNode.getBody());
     symbolTable.removeScope();
-
     currentFunctionReturnType = oldReturnType;
   }
 
