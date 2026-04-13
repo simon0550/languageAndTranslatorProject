@@ -7,6 +7,7 @@ import java.util.List;
 public class SemanticAnalyzer {
 
   private SymbolTable symbolTable = new SymbolTable();
+  private String currentFunctionReturnType = null;
 
   public void analyseTree(Node root){
     symbolTable.addNewScope();
@@ -51,7 +52,13 @@ public class SemanticAnalyzer {
     }
 
     else if(node instanceof ReturnNode){
-      evaluateType(((ReturnNode)node).getExpression());
+      String expressionType = evaluateType(((ReturnNode)node).getExpression());
+      if (currentFunctionReturnType != null) {
+        if (!currentFunctionReturnType.equals(expressionType) && !expressionType.equals("UNKNOWN")) {
+          System.err.println("ReturnError");
+          System.exit(2);
+        }
+      }
     }
 
     else if(node instanceof CollectionDeclarationNode) {
@@ -187,6 +194,12 @@ public class SemanticAnalyzer {
   }
 
   private void browseFunctionNode(FunctionNode functionNode) {
+    String returnType = functionNode.getRetType();
+    symbolTable.addNewVariable(functionNode.getName(), returnType, true);
+
+    String oldReturnType = currentFunctionReturnType;
+    currentFunctionReturnType = returnType;
+
     symbolTable.addNewScope();
     if (functionNode.getParameters() != null) {
       for (Node param : functionNode.getParameters()) {
@@ -196,6 +209,8 @@ public class SemanticAnalyzer {
     }
     browse(functionNode.getBody());
     symbolTable.removeScope();
+
+    currentFunctionReturnType = oldReturnType;
   }
 
   private void browseIfNode(IfNode ifNode){
