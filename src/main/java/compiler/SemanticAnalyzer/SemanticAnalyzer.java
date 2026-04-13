@@ -16,7 +16,9 @@ public class SemanticAnalyzer {
   public void analyseTree(Node root){
     symbolTable.addNewScope();
     symbolTable.addNewVariable("read_INT", "INT", true);
+    typeParamList.put("read_INT", new ArrayList<>());
     symbolTable.addNewVariable("println", "VOID", true);
+    typeParamList.put("println", null);
     browse(root);
   }
 
@@ -75,22 +77,45 @@ public class SemanticAnalyzer {
       browseTableAssignment((TableAssignmentNode) node);
 
     } else if (node instanceof  FunctionCallNode) {
-      browseFunctionCall((FunctionCallNode) node);
+      checkFunctionCall((FunctionCallNode) node);
     } else if(node.getClass().getSimpleName().contains("CommentNode")) {
       return;
     }
     else evaluateType(node);
   }
-  private void browseFunctionCall(FunctionCallNode node) {
+
+  private String checkFunctionCall(FunctionCallNode node) {
     String fname = node.getName();
-    if (symbolTable.containsType(fname) == null) {
+    String returnType = symbolTable.containsType(fname);
+
+    if (returnType == null) {
       System.err.println("ScopeError");
       System.exit(2);
     }
-    List<Node> params = node.getParams();
-    for (Node param : params) {
-      evaluateType(param);
+
+    List<String> expectedTypes = typeParamList.get(fname);
+    List<Node> parameters = node.getParams();
+
+    if (expectedTypes != null) {
+      if (expectedTypes.size() != parameters.size()) {
+        System.err.println("ArgumentError");
+        System.exit(2);
+      }
+
+      for (int i = 0; i < expectedTypes.size(); i++) {
+        String argType = evaluateType(parameters.get(i));
+        String expected = expectedTypes.get(i);
+
+        if (!argType.equals(expected) && !argType.equals("UNKNOWN")) {
+          System.err.println("ArgumentError");
+          System.exit(2);
+        }
+      }
+    } else if (fname.equals("println")) {
+      for (Node arg : parameters) evaluateType(arg);
     }
+
+    return returnType;
   }
 
   private void browseCollectionDefNode(CollectionDefNode node) {
@@ -316,8 +341,7 @@ public class SemanticAnalyzer {
     }
 
     if (node instanceof FunctionCallNode){
-
-      return "UNKNOWN";
+      return checkFunctionCall((FunctionCallNode) node);
     }
 
     if (node instanceof TableAccessNode accessNode) {
