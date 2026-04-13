@@ -139,7 +139,7 @@ public class SemanticAnalyzer {
       System.exit(2);
     }
 
-    symbolTable.addNewVariable(collName, "TYPE_DEF", true);
+    symbolTable.addNewVariable(collName, collName, true);
 
     symbolTable.addNewScope();
     for (Node field : node.getProperties()) {
