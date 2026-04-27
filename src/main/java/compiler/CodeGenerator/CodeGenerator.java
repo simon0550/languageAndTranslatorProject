@@ -14,6 +14,7 @@ public class CodeGenerator implements Opcodes {
 
   // On donne un numéro a chaque paramètre et variables
   private Map<String, Integer> variableSlots = new HashMap<>();
+  private int nextSlot = 0;
 
   public byte[] generate(Node root, String className) {
     this.className = className;
@@ -56,7 +57,41 @@ public class CodeGenerator implements Opcodes {
     }
   }
 
-  private void generateFunction(FunctionNode node){}
+  private void generateFunction(FunctionNode node){
+    variableSlots.clear();
+    nextSlot = 0;
+
+    String name = node.getName();
+
+    StringBuilder descBuilder = new StringBuilder("(");
+    if (name.equals("main")) {
+      descBuilder.append("[Ljava/lang/String;");
+      variableSlots.put("args", nextSlot++);
+    } else if (node.getParameters() != null) {
+      for (Node parameter : node.getParameters()) {
+        ParameterNode param = (ParameterNode) parameter;
+        descBuilder.append("I");
+        variableSlots.put(param.getName(), nextSlot++);
+      }
+    }
+    descBuilder.append(")");
+    descBuilder.append(name.equals("main") ? "V" : "I");
+
+    MethodVisitor methodVisitor = classWriter.visitMethod(ACC_PUBLIC + ACC_STATIC, name, descBuilder.toString(), null, null);
+    methodVisitor.visitCode();
+
+    // On devrait faire le corps ici ?
+
+    if (name.equals("main")) {
+      methodVisitor.visitInsn(RETURN);
+    } else {
+      methodVisitor.visitInsn(ICONST_0);
+      methodVisitor.visitInsn(IRETURN);
+    }
+
+    methodVisitor.visitMaxs(0, 0);
+    methodVisitor.visitEnd();
+  }
 
   private void generateGlobalVariable(DeclarationNode node) {
     String name = node.getName();
