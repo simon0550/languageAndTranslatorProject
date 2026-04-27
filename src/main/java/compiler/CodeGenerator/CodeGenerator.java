@@ -80,7 +80,7 @@ public class CodeGenerator implements Opcodes {
     MethodVisitor methodVisitor = classWriter.visitMethod(ACC_PUBLIC + ACC_STATIC, name, descBuilder.toString(), null, null);
     methodVisitor.visitCode();
 
-    // On devrait faire le corps ici ?
+    generateStatement(node.getBody(), methodVisitor);
 
     if (name.equals("main")) {
       methodVisitor.visitInsn(RETURN);
@@ -92,6 +92,36 @@ public class CodeGenerator implements Opcodes {
     methodVisitor.visitMaxs(0, 0);
     methodVisitor.visitEnd();
   }
+
+  private void generateStatement(Node node, MethodVisitor mv) {
+    if (node == null) return;
+
+    if (node instanceof LocalBlockNode) {
+      for (Node sub : ((LocalBlockNode) node).getLocalNodes()) generateStatement(sub, mv);
+    }
+    else if (node instanceof AssignmentNode) {
+      AssignmentNode assignment = (AssignmentNode) node;
+      String varName = ((IdNode) assignment.getIdentifier()).getName();
+
+      // On traite l'expression à droite du "="
+      generateExpression(assignment.getExpression(), mv);
+
+      if (variableSlots.containsKey(varName)) {
+        // Variable est déjà local, on l'écrase
+        mv.visitVarInsn(ISTORE, variableSlots.get(varName));
+      } else if (assignment.getType() instanceof EmptyNode) {
+        // Si elle n'a pas de type, c'est qu'elle est globale.
+        mv.visitFieldInsn(PUTSTATIC, this.className, varName, "I");
+      } else {
+        // Nouvelle déclaration locale (ex: INT x = 5)
+        variableSlots.put(varName, nextSlot++);
+        mv.visitVarInsn(ISTORE, variableSlots.get(varName));
+      }
+    }
+  }
+
+  private void generateExpression(Node node, MethodVisitor mv){}
+
 
   private void generateGlobalVariable(DeclarationNode node) {
     String name = node.getName();
