@@ -12,7 +12,7 @@ public class CodeGenerator implements Opcodes {
   private ClassWriter classWriter;
   private String className;
 
-  // On donne un numéro a chaque paramètre et variables
+  // On donne un numéro à chaque paramètre et variables
   private Map<String, Integer> variableSlots = new HashMap<>();
   private int nextSlot = 0;
 
@@ -108,5 +108,28 @@ public class CodeGenerator implements Opcodes {
     return "L" + type + ";";
   }
 
-  private void generateStructClass(CollectionDefNode node) {}
+  private void generateStructClass(CollectionDefNode node) {
+    String structName = node.getName();
+    ClassWriter structClassWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+
+    structClassWriter.visit(V1_8, ACC_PUBLIC, structName, null, "java/lang/Object", null);
+
+    for (Node prop : node.getProperties()) {
+      if (prop instanceof DeclarationNode) {
+        DeclarationNode field = (DeclarationNode) prop;
+        String desc = getDescriptor(field.getType());
+        structClassWriter.visitField(ACC_PUBLIC, field.getName(), desc, null, null).visitEnd();
+      }
+    }
+
+    MethodVisitor methodVisitor = structClassWriter.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+    methodVisitor.visitCode();
+    methodVisitor.visitVarInsn(ALOAD, 0);
+    methodVisitor.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+    methodVisitor.visitInsn(RETURN);
+    methodVisitor.visitMaxs(1, 1);
+    methodVisitor.visitEnd();
+
+    structClassWriter.visitEnd();
+  }
 }
