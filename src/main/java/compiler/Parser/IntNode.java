@@ -8,6 +8,9 @@ public class IntNode extends Node{
     this.value = value;
   }
 
+  public String getValue() {
+    return value;
+  }
 
   @Override
   public String print(int depth) {
