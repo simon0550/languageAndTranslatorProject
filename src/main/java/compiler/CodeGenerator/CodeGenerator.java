@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class CodeGenerator implements Opcodes {
 
-  private ClassWriter cw;
+  private ClassWriter classWriter;
   private String className;
 
   // On donne un numéro a chaque paramètre et variables
@@ -18,15 +18,60 @@ public class CodeGenerator implements Opcodes {
   public byte[] generate(Node root, String className) {
     this.className = className;
 
-    this.cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+    this.classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
-    cw.visit(V1_8, ACC_PUBLIC, className, null, "java/lang/Object", null);
+    classWriter.visit(V1_8, ACC_PUBLIC, className, null, "java/lang/Object", null);
 
     generateConstructor();
+    browse(root);
 
-    cw.visitEnd();
-    return cw.toByteArray();
+    classWriter.visitEnd();
+    return classWriter.toByteArray();
   }
 
-  private void generateConstructor() {}
+  private void generateConstructor() {
+    MethodVisitor mv = classWriter.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+    mv.visitCode();
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+    mv.visitInsn(RETURN);
+    mv.visitMaxs(1, 1);
+    mv.visitEnd();
+  }
+
+  private void browse(Node node) {
+    if (node instanceof ProgramNode) {
+      for (Node declaration : ((ProgramNode) node).getDeclarations()) {
+        browse(declaration);
+      }
+    }
+    else if (node instanceof FunctionNode) {
+      generateFunction((FunctionNode) node);
+    }
+    else if (node instanceof DeclarationNode) {
+      generateGlobalVariable((DeclarationNode) node);
+    }
+    else if (node instanceof CollectionDefNode) {
+      generateStructClass((CollectionDefNode) node);
+    }
+  }
+
+  private void generateFunction(FunctionNode node){}
+
+  private void generateGlobalVariable(DeclarationNode node) {
+    String name = node.getName();
+    String typeDescriptor = getDescriptor(node.getType());
+
+    classWriter.visitField(ACC_PUBLIC + ACC_STATIC, name, typeDescriptor, null, null).visitEnd();
+  }
+
+  private String getDescriptor(String type) {
+    if (type.equals("INT")) return "I";
+    if (type.equals("FLOAT")) return "F";
+    if (type.equals("BOOL")) return "Z";
+    if (type.equals("STRING")) return "Ljava/lang/String;";
+    return "L" + type + ";";
+  }
+
+  private void generateStructClass(CollectionDefNode node) {}
 }
