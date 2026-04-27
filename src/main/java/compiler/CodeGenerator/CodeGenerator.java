@@ -113,14 +113,43 @@ public class CodeGenerator implements Opcodes {
         // Si elle n'a pas de type, c'est qu'elle est globale.
         mv.visitFieldInsn(PUTSTATIC, this.className, varName, "I");
       } else {
-        // Nouvelle déclaration locale (ex: INT x = 5)
+        // Nouvelle déclaration locale
         variableSlots.put(varName, nextSlot++);
         mv.visitVarInsn(ISTORE, variableSlots.get(varName));
       }
     }
   }
 
-  private void generateExpression(Node node, MethodVisitor mv){}
+  private void generateExpression(Node node, MethodVisitor mv){
+    if (node instanceof IntNode) {
+      mv.visitLdcInsn(((IntNode) node).getValue()); // On met l'entier en haut de la pilee
+    }
+    else if (node instanceof IdNode) {
+      String name = ((IdNode) node).getName();
+      if (variableSlots.containsKey(name)) {
+        // Variable locale
+        mv.visitVarInsn(ILOAD, variableSlots.get(name));
+      } else {
+        // Variable global
+        mv.visitFieldInsn(GETSTATIC, this.className, name, "I");
+      }
+    }
+    else if (node instanceof BinaryNode) {
+      BinaryNode bin = (BinaryNode) node;
+
+      // Parcours post-ordre (gauche, droite puis milieuu)
+      generateExpression(bin.getLeft(), mv);
+      generateExpression(bin.getRight(), mv);
+
+      switch (bin.getOperator()) {
+        case "+" -> mv.visitInsn(IADD);
+        case "-" -> mv.visitInsn(ISUB);
+        case "*" -> mv.visitInsn(IMUL);
+        case "/" -> mv.visitInsn(IDIV);
+        case "%" -> mv.visitInsn(IREM);
+      }
+    }
+  }
 
 
   private void generateGlobalVariable(DeclarationNode node) {
