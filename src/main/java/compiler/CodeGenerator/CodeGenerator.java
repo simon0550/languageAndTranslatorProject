@@ -2,6 +2,7 @@ package compiler.CodeGenerator;
 
 import compiler.Parser.*;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import java.util.HashMap;
@@ -118,6 +119,27 @@ public class CodeGenerator implements Opcodes {
         mv.visitVarInsn(ISTORE, variableSlots.get(varName));
       }
     }
+
+    else if (node instanceof IfNode ifNode) {
+      Label elseLabel = new Label();
+      Label endLabel = new Label();
+
+      generateExpression(ifNode.getCondition(), mv);
+
+      mv.visitJumpInsn(IFEQ, elseLabel);
+
+      generateStatement(ifNode.getThenCaseBlock(), mv);
+
+      mv.visitJumpInsn(GOTO, endLabel);
+
+      mv.visitLabel(elseLabel);
+      if (ifNode.getElseCaseBlock() != null) {
+        generateStatement(ifNode.getElseCaseBlock(), mv);
+      }
+
+      mv.visitLabel(endLabel);
+    }
+
     // Cas du println
     else if (node instanceof FunctionCallNode) {
       generateFunctionCall((FunctionCallNode) node, mv);
@@ -129,11 +151,17 @@ public class CodeGenerator implements Opcodes {
     }
   }
 
-  private void generateFunctionCall(FunctionCallNode call, MethodVisitor mv) {
-    if (call.getName().equals("println")) {
+  private void generateFunctionCall(FunctionCallNode functionCallNode, MethodVisitor mv) {
+    if (functionCallNode.getName().equals("println")) {
       mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-      generateExpression(call.getParams().get(0), mv);
+      generateExpression(functionCallNode.getParams().get(0), mv);
       mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
+    }
+    else {
+      for (Node arg : functionCallNode.getParams()) {
+        generateExpression(arg, mv);
+      }
+      mv.visitMethodInsn(INVOKESTATIC, this.className, functionCallNode.getName(), "(II)I", false);
     }
   }
 
