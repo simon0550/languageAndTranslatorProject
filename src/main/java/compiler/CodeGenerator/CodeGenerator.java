@@ -19,17 +19,18 @@ public class CodeGenerator implements Opcodes {
   public byte[] generate(Node root, String className) {
     this.className = className;
 
-    this.classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-
+    this.classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES); // Compute_frames calcule la taille max de la pile et des variables globales
+    // V1_8 est la version de Java
     classWriter.visit(V1_8, ACC_PUBLIC, className, null, "java/lang/Object", null);
 
     generateConstructor();
-    browse(root);
+    browse(root); // Lancement du parcours de l'arbre AST
 
     classWriter.visitEnd();
     return classWriter.toByteArray();
   }
 
+  // On met d'office un constructeur par défaut
   private void generateConstructor() {
     MethodVisitor mv = classWriter.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
     mv.visitCode();
@@ -46,19 +47,19 @@ public class CodeGenerator implements Opcodes {
         browse(declaration);
       }
     }
-    else if (node instanceof FunctionNode) {
+    else if (node instanceof FunctionNode) { // Vers la génération de méthodes
       generateFunction((FunctionNode) node);
     }
     else if (node instanceof DeclarationNode) {
       generateGlobalVariable((DeclarationNode) node);
     }
-    else if (node instanceof CollectionDefNode) {
+    else if (node instanceof CollectionDefNode) { // Gestion des cass de structures
       generateStructClass((CollectionDefNode) node);
     }
   }
 
   private void generateFunction(FunctionNode node){
-    variableSlots.clear();
+    variableSlots.clear(); // On garantit que les variables locales ne gênent pas d'autres d'une autre méthode
     nextSlot = 0;
 
     String name = node.getName();
@@ -99,8 +100,7 @@ public class CodeGenerator implements Opcodes {
     if (node instanceof LocalBlockNode) {
       for (Node sub : ((LocalBlockNode) node).getLocalNodes()) generateStatement(sub, mv);
     }
-    else if (node instanceof AssignmentNode) {
-      AssignmentNode assignment = (AssignmentNode) node;
+    else if (node instanceof AssignmentNode assignment) {
       String varName = ((IdNode) assignment.getIdentifier()).getName();
 
       // On traite l'expression à droite du "="
@@ -134,14 +134,13 @@ public class CodeGenerator implements Opcodes {
         mv.visitFieldInsn(GETSTATIC, this.className, name, "I");
       }
     }
-    else if (node instanceof BinaryNode) {
-      BinaryNode bin = (BinaryNode) node;
+    else if (node instanceof BinaryNode binaryNode) {
 
       // Parcours post-ordre (gauche, droite puis milieuu)
-      generateExpression(bin.getLeft(), mv);
-      generateExpression(bin.getRight(), mv);
+      generateExpression(binaryNode.getLeft(), mv);
+      generateExpression(binaryNode.getRight(), mv);
 
-      switch (bin.getOperator()) {
+      switch (binaryNode.getOperator()) {
         case "+" -> mv.visitInsn(IADD);
         case "-" -> mv.visitInsn(ISUB);
         case "*" -> mv.visitInsn(IMUL);
@@ -155,7 +154,7 @@ public class CodeGenerator implements Opcodes {
   private void generateGlobalVariable(DeclarationNode node) {
     String name = node.getName();
     String typeDescriptor = getDescriptor(node.getType());
-
+    // Les variables sont public static puisqu'on est au niveau global du programme
     classWriter.visitField(ACC_PUBLIC + ACC_STATIC, name, typeDescriptor, null, null).visitEnd();
   }
 
