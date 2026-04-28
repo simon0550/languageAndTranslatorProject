@@ -140,6 +140,23 @@ public class CodeGenerator implements Opcodes {
       mv.visitLabel(endLabel);
     }
 
+    else if (node instanceof WhileNode whileNode) {
+      Label startLabel = new Label();
+      Label endLabel = new Label();
+
+      mv.visitLabel(startLabel);
+
+      generateExpression(whileNode.getCondition(), mv);
+
+      mv.visitJumpInsn(IFEQ, endLabel);
+
+      generateStatement(whileNode.getCodeInNode(), mv);
+
+      mv.visitJumpInsn(GOTO, startLabel);
+
+      mv.visitLabel(endLabel);
+    }
+
     // Cas du println
     else if (node instanceof FunctionCallNode) {
       generateFunctionCall((FunctionCallNode) node, mv);
