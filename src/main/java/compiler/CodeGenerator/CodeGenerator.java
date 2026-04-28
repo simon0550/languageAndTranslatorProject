@@ -118,6 +118,23 @@ public class CodeGenerator implements Opcodes {
         mv.visitVarInsn(ISTORE, variableSlots.get(varName));
       }
     }
+    // Cas du println
+    else if (node instanceof FunctionCallNode) {
+      generateFunctionCall((FunctionCallNode) node, mv);
+    }
+    // Cas du Return, par exemple : return 1+2;
+    else if (node instanceof ReturnNode) {
+      generateExpression(((ReturnNode) node).getExpression(), mv);
+      mv.visitInsn(IRETURN);
+    }
+  }
+
+  private void generateFunctionCall(FunctionCallNode call, MethodVisitor mv) {
+    if (call.getName().equals("println")) {
+      mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+      generateExpression(call.getParams().get(0), mv);
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
+    }
   }
 
   private void generateExpression(Node node, MethodVisitor mv){
@@ -136,7 +153,7 @@ public class CodeGenerator implements Opcodes {
     }
     else if (node instanceof BinaryNode binaryNode) {
 
-      // Parcours post-ordre (gauche, droite puis milieuu)
+      // Parcours post-ordre (gauche, droite puis milieu)
       generateExpression(binaryNode.getLeft(), mv);
       generateExpression(binaryNode.getRight(), mv);
 
