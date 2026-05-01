@@ -202,12 +202,43 @@ public class CodeGenerator implements Opcodes {
       generateExpression(binaryNode.getLeft(), mv);
       generateExpression(binaryNode.getRight(), mv);
 
-      switch (binaryNode.getOperator()) {
+      String op = binaryNode.getOperator();
+
+      switch (op) {
         case "+" -> mv.visitInsn(IADD);
         case "-" -> mv.visitInsn(ISUB);
         case "*" -> mv.visitInsn(IMUL);
         case "/" -> mv.visitInsn(IDIV);
         case "%" -> mv.visitInsn(IREM);
+
+        // Cas spéciaux (Comparaisons)
+        case "==", "!=", "<", ">", "<=", ">=" -> {
+          Label trueLabel = new Label();
+          Label endLabel = new Label();
+
+          int jumpOpcode = switch (op) {
+            case "==" -> IF_ICMPEQ;
+            case "!=" -> IF_ICMPNE;
+            case "<"  -> IF_ICMPLT;
+            case ">"  -> IF_ICMPGT;
+            case "<=" -> IF_ICMPLE;
+            case ">=" -> IF_ICMPGE;
+            default   -> throw new IllegalStateException("Opérateur inconnu");
+          };
+
+          // Si la condition est vraie, on saute au label 'true'
+          mv.visitJumpInsn(jumpOpcode, trueLabel);
+
+          // Sinon, on pose 0 sur la pile et on saute à la fin
+          mv.visitInsn(ICONST_0);
+          mv.visitJumpInsn(GOTO, endLabel);
+
+          // Si vrai, on pose 1 sur la pile
+          mv.visitLabel(trueLabel);
+          mv.visitInsn(ICONST_1);
+
+          mv.visitLabel(endLabel);
+        }
       }
     }
   }
