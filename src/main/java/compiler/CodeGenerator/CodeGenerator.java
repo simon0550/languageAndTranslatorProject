@@ -192,7 +192,16 @@ public class CodeGenerator implements Opcodes {
 
   private void generateExpression(Node node, MethodVisitor mv){
     if (node instanceof IntNode) {
-      mv.visitLdcInsn(((IntNode) node).getValue()); // On met l'entier en haut de la pilee
+      String value = ((IntNode) node).getValue();
+      int intVal;
+
+      if (value != null) {
+        intVal = Integer.parseInt(value);
+      } else {
+        intVal = 0;
+      }
+
+      mv.visitLdcInsn(intVal);
     }
     else if (node instanceof IdNode) {
       String name = ((IdNode) node).getName();
