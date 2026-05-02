@@ -4,6 +4,7 @@ import compiler.Lexer.Lexer;
 import compiler.Parser.Node;
 import compiler.Parser.Parser;
 import compiler.SemanticAnalyzer.SemanticAnalyzer;
+import java.util.Map;
 import junit.framework.TestCase;
 
 import java.io.FileOutputStream;
@@ -24,20 +25,23 @@ public class TestCodeGenerator extends TestCase {
 
       SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
       semanticAnalyzer.analyseTree(ast);
-
       System.out.println("Analyse sémantique réussie.");
 
       CodeGenerator generator = new CodeGenerator();
-      byte[] bytecode = generator.generate(ast, "Main");
+      Map<String, byte[]> classes = generator.generate(ast, "Main");
 
-      try (FileOutputStream fos = new FileOutputStream("Main.class")) {
-        fos.write(bytecode);
+      for (Map.Entry<String, byte[]> entry : classes.entrySet()) {
+        String fileName = entry.getKey() + ".class";
+        try (FileOutputStream fos = new FileOutputStream(fileName)) {
+          fos.write(entry.getValue());
+          System.out.println("Fichier " + fileName + " généré avec succès.");
+        }
       }
 
-      assertTrue("Compilation et génération réussies", true);
-      System.out.println("Fichier Main.class généré avec succès.");
+      assertTrue(true);
 
     } catch (Exception e) {
+      e.printStackTrace();
       fail("Erreur pendant la compilation : " + e.getMessage());
     }
   }

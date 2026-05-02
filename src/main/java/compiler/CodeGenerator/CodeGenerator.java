@@ -16,7 +16,7 @@ public class CodeGenerator implements Opcodes {
   // On donne un numéro à chaque paramètre et variables
   private Map<String, Integer> variableSlots = new HashMap<>();
   private int nextSlot = 0;
-  private Map<String, byte[]> generatedClasses = new HashMap<>();
+  private Map<String, byte[]> generatedClasses = new HashMap<>(); // On stocke le nom de la classe avec son code bianire
 
   public Map<String, byte[]> generate(Node root, String className) {
     this.generatedClasses.clear();
@@ -30,7 +30,7 @@ public class CodeGenerator implements Opcodes {
     browse(root); // Lancement du parcours de l'arbre AST
 
     classWriter.visitEnd();
-    generatedClasses.put(className, classWriter.toByteArray());
+    generatedClasses.put(className, classWriter.toByteArray()); // On stocke le résultat dans le dictionneaire
 
     return generatedClasses;
   }
@@ -179,10 +179,14 @@ public class CodeGenerator implements Opcodes {
       mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
     }
     else {
+      StringBuilder descBuilder = new StringBuilder("(");
       for (Node arg : functionCallNode.getParams()) {
         generateExpression(arg, mv);
+        descBuilder.append("I");
       }
-      mv.visitMethodInsn(INVOKESTATIC, this.className, functionCallNode.getName(), "(II)I", false);
+      descBuilder.append(")I");
+
+      mv.visitMethodInsn(INVOKESTATIC, this.className, functionCallNode.getName(), descBuilder.toString(), false);
     }
   }
 
