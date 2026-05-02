@@ -16,8 +16,10 @@ public class CodeGenerator implements Opcodes {
   // On donne un numéro à chaque paramètre et variables
   private Map<String, Integer> variableSlots = new HashMap<>();
   private int nextSlot = 0;
+  private Map<String, byte[]> generatedClasses = new HashMap<>();
 
-  public byte[] generate(Node root, String className) {
+  public Map<String, byte[]> generate(Node root, String className) {
+    this.generatedClasses.clear();
     this.className = className;
 
     this.classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES); // Compute_frames calcule la taille max de la pile et des variables globales
@@ -28,7 +30,9 @@ public class CodeGenerator implements Opcodes {
     browse(root); // Lancement du parcours de l'arbre AST
 
     classWriter.visitEnd();
-    return classWriter.toByteArray();
+    generatedClasses.put(className, classWriter.toByteArray());
+
+    return generatedClasses;
   }
 
   // On met d'office un constructeur par défaut
@@ -282,5 +286,6 @@ public class CodeGenerator implements Opcodes {
     methodVisitor.visitEnd();
 
     structClassWriter.visitEnd();
+    generatedClasses.put(structName, structClassWriter.toByteArray());
   }
 }
