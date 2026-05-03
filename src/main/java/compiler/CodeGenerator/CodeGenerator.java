@@ -165,7 +165,7 @@ public class CodeGenerator implements Opcodes {
     else if (node instanceof FunctionCallNode) {
       generateFunctionCall((FunctionCallNode) node, mv);
     }
-    // Cas du Return, par exemple : return 1+2;
+    // Cas du Return
     else if (node instanceof ReturnNode) {
       generateExpression(((ReturnNode) node).getExpression(), mv);
       mv.visitInsn(IRETURN);
@@ -190,75 +190,74 @@ public class CodeGenerator implements Opcodes {
     }
   }
 
-  private void generateExpression(Node node, MethodVisitor mv){
-    if (node instanceof IntNode) {
-      String value = ((IntNode) node).getValue();
+  private void generateExpression(Node node, MethodVisitor mv) {
+    if (node == null) return;
+
+    System.out.println("Génération expression pour : " + node.getClass().getSimpleName());
+
+    if (node instanceof IntNode intNode) {
+      String value = intNode.getValue();
       mv.visitLdcInsn(value != null ? Integer.parseInt(value) : 0);
     }
-    else if (node instanceof FloatNode) {
-      float floatVal = Float.parseFloat(((FloatNode) node).getValue());
-      mv.visitLdcInsn(floatVal);
+    else if (node instanceof FloatNode floatNode) {
+      mv.visitLdcInsn(Float.parseFloat(floatNode.getValue()));
     }
-    else if (node instanceof StringNode) {
-      mv.visitLdcInsn(((StringNode) node).getContent());
+    else if (node instanceof StringNode stringNode) {
+      mv.visitLdcInsn(stringNode.getContent());
     }
-    else if (node instanceof BoolNode) {
-      boolean boolVal = ((BoolNode) node).isValue();
-      mv.visitInsn(boolVal ? ICONST_1 : ICONST_0);
+    else if (node instanceof BoolNode boolNode) {
+      mv.visitInsn(boolNode.isValue() ? ICONST_1 : ICONST_0);
     }
-    else if (node instanceof IdNode) {
-      String name = ((IdNode) node).getName();
+    else if (node instanceof FunctionCallNode functionCallNode) {
+      generateFunctionCall(functionCallNode, mv);
+    }
+    else if (node instanceof IdNode idNode) {
+      String name = idNode.getName();
       if (variableSlots.containsKey(name)) {
-        // Variable locale
         mv.visitVarInsn(ILOAD, variableSlots.get(name));
       } else {
-        // Variable global
         mv.visitFieldInsn(GETSTATIC, this.className, name, "I");
       }
     }
     else if (node instanceof BinaryNode binaryNode) {
-      // Parcours post-ordre (gauche, droite puis milieu)
       generateExpression(binaryNode.getLeft(), mv);
       generateExpression(binaryNode.getRight(), mv);
 
       String op = binaryNode.getOperator();
-
       switch (op) {
         case "+" -> mv.visitInsn(IADD);
         case "-" -> mv.visitInsn(ISUB);
         case "*" -> mv.visitInsn(IMUL);
         case "/" -> mv.visitInsn(IDIV);
-
-        // Cas spéciaux (Comparaisons)
-        case "==", "!=", "<", ">", "<=", ">=" -> {
-          Label trueLabel = new Label();
-          Label endLabel = new Label();
-
-          int jumpOpcode = switch (op) {
-            case "==" -> IF_ICMPEQ;
-            case "!=" -> IF_ICMPNE;
-            case "<"  -> IF_ICMPLT;
-            case ">"  -> IF_ICMPGT;
-            case "<=" -> IF_ICMPLE;
-            case ">=" -> IF_ICMPGE;
-            default   -> throw new IllegalStateException("Opérateur inconnu");
-          };
-
-          // Si la condition est vraie, on saute au label 'true'
-          mv.visitJumpInsn(jumpOpcode, trueLabel);
-
-          // Sinon, on pose 0 sur la pile et on saute à la fin
-          mv.visitInsn(ICONST_0);
-          mv.visitJumpInsn(GOTO, endLabel);
-
-          // Si vrai, on pose 1 sur la pile
-          mv.visitLabel(trueLabel);
-          mv.visitInsn(ICONST_1);
-
-          mv.visitLabel(endLabel);
-        }
+        case "%" -> mv.visitInsn(IREM);
+        case "==", "!=", "<", ">", "<=", ">=" -> generateComparison(op, mv);
+        default -> throw new UnsupportedOperationException("Opérateur non géré : " + op);
       }
     }
+    else {
+      throw new UnsupportedOperationException("Le générateur ne reconnaît pas le type de nœud : "
+          + node.getClass().getCanonicalName());
+    }
+  }
+
+  private void generateComparison(String op, MethodVisitor mv) {
+    Label trueLabel = new Label();
+    Label endLabel = new Label();
+    int jumpOpcode = switch (op) {
+      case "==" -> IF_ICMPEQ;
+      case "!=" -> IF_ICMPNE;
+      case "<"  -> IF_ICMPLT;
+      case ">"  -> IF_ICMPGT;
+      case "<=" -> IF_ICMPLE;
+      case ">=" -> IF_ICMPGE;
+      default   -> throw new IllegalStateException();
+    };
+    mv.visitJumpInsn(jumpOpcode, trueLabel);
+    mv.visitInsn(ICONST_0);
+    mv.visitJumpInsn(GOTO, endLabel);
+    mv.visitLabel(trueLabel);
+    mv.visitInsn(ICONST_1);
+    mv.visitLabel(endLabel);
   }
 
 
