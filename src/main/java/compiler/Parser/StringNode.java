@@ -8,6 +8,10 @@ public class StringNode extends Node {
     this.content = content;
   }
 
+  public String getContent() {
+    return content;
+  }
+
   @Override
   public String print(int depth) {
     return indent(depth) + "StringNode(" + content + ")" + "\n";

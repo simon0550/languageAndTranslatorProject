@@ -193,15 +193,18 @@ public class CodeGenerator implements Opcodes {
   private void generateExpression(Node node, MethodVisitor mv){
     if (node instanceof IntNode) {
       String value = ((IntNode) node).getValue();
-      int intVal;
-
-      if (value != null) {
-        intVal = Integer.parseInt(value);
-      } else {
-        intVal = 0;
-      }
-
-      mv.visitLdcInsn(intVal);
+      mv.visitLdcInsn(value != null ? Integer.parseInt(value) : 0);
+    }
+    else if (node instanceof FloatNode) {
+      float floatVal = Float.parseFloat(((FloatNode) node).getValue());
+      mv.visitLdcInsn(floatVal);
+    }
+    else if (node instanceof StringNode) {
+      mv.visitLdcInsn(((StringNode) node).getContent());
+    }
+    else if (node instanceof BoolNode) {
+      boolean boolVal = ((BoolNode) node).isValue();
+      mv.visitInsn(boolVal ? ICONST_1 : ICONST_0);
     }
     else if (node instanceof IdNode) {
       String name = ((IdNode) node).getName();
@@ -214,7 +217,6 @@ public class CodeGenerator implements Opcodes {
       }
     }
     else if (node instanceof BinaryNode binaryNode) {
-
       // Parcours post-ordre (gauche, droite puis milieu)
       generateExpression(binaryNode.getLeft(), mv);
       generateExpression(binaryNode.getRight(), mv);
@@ -226,7 +228,6 @@ public class CodeGenerator implements Opcodes {
         case "-" -> mv.visitInsn(ISUB);
         case "*" -> mv.visitInsn(IMUL);
         case "/" -> mv.visitInsn(IDIV);
-        case "%" -> mv.visitInsn(IREM);
 
         // Cas spéciaux (Comparaisons)
         case "==", "!=", "<", ">", "<=", ">=" -> {

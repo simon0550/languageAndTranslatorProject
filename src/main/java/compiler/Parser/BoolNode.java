@@ -6,6 +6,9 @@ public class BoolNode extends Node {
         this.value = value;
     }
 
+    public boolean isValue() {
+        return value;
+    }
 
     @Override
     public String print(int depth) {
