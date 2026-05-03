@@ -10,6 +10,14 @@ public class DotNode extends Node{
     this.fieldName = fieldName;
   }
 
+  public Node getNode() {
+    return node;
+  }
+
+  public String getFieldName() {
+    return fieldName;
+  }
+
   @Override
   public String print(int depth) {
     return indent(depth) + "DotNode(." + fieldName + ")\n" +

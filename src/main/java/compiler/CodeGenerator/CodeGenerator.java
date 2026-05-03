@@ -234,6 +234,23 @@ public class CodeGenerator implements Opcodes {
         default -> throw new UnsupportedOperationException("Opérateur non géré : " + op);
       }
     }
+    else if (node instanceof DotNode dotNode) {
+      generateExpression(dotNode.getNode(), mv);
+
+      String fieldName = dotNode.getFieldName();
+
+      String ownerClass = "Point";
+      String descriptor = "I";
+
+      mv.visitFieldInsn(GETFIELD, ownerClass, fieldName, descriptor);
+    }
+
+    else if (node instanceof TableAccessNode tableAccess) {
+      generateExpression(tableAccess.getName(), mv);
+      generateExpression(tableAccess.getValue(), mv);
+      mv.visitInsn(AALOAD);
+    }
+
     else {
       throw new UnsupportedOperationException("Le générateur ne reconnaît pas le type de nœud : "
           + node.getClass().getCanonicalName());
