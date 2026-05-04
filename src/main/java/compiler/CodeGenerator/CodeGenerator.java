@@ -108,35 +108,45 @@ public class CodeGenerator implements Opcodes {
 
   private void generateStatement(Node node, MethodVisitor mv) {
     if (node == null) return;
+    // On fait un simple appel récursif lorqu'on a qu'un simple bloc
     if (node instanceof LocalBlockNode) {
       for (Node sub : ((LocalBlockNode) node).getLocalNodes()) generateStatement(sub, mv);
     }
+
     else if (node instanceof AssignmentNode assignment) {
       String varName = ((IdNode) assignment.getIdentifier()).getName();
       generateExpression(assignment.getExpression(), mv);
 
-      String typeDesc;
+      String typeDescriptor;
       if (variableSlots.containsKey(varName)) {
-        typeDesc = localVariableTypes.getOrDefault(varName, "I");
+        typeDescriptor = localVariableTypes.getOrDefault(varName, "I");
       } else {
         String typeName = "INT";
         Node typeNode = assignment.getType();
 
         if (typeNode instanceof IdNode) {
           typeName = ((IdNode) typeNode).getName();
-        } else if (typeNode != null) {
-          typeName = typeNode.getClass().getSimpleName().replace("Node", "").toUpperCase();
+        } else if (typeNode != null && !(typeNode instanceof EmptyNode)) {
+          String rawType = typeNode.toString().toUpperCase();
+          if (rawType.contains("INT")) typeName = "INT";
+          else if (rawType.contains("FLOAT")) typeName = "FLOAT";
+          else if (rawType.contains("BOOL")) typeName = "BOOL";
+          else if (rawType.contains("STRING")) typeName = "STRING";
+          else if (rawType.contains("ARRAY")) typeName = rawType; // Pour les tableaux
+          else typeName = "INT";
         }
 
-        typeDesc = getDescriptor(typeName);
+        typeDescriptor = getDescriptor(typeName);
         variableSlots.put(varName, nextSlot++);
-        localVariableTypes.put(varName, typeDesc);
+        localVariableTypes.put(varName, typeDescriptor);
       }
 
-      if (typeDesc.startsWith("L") || typeDesc.startsWith("[")) {
-        mv.visitVarInsn(ASTORE, variableSlots.get(varName));
+      if (typeDescriptor.startsWith("L") || typeDescriptor.startsWith("[")) {
+        mv.visitVarInsn(ASTORE, variableSlots.get(varName)); // Range un objet ou un tableau
+      } else if (typeDescriptor.equals("F")) {
+        mv.visitVarInsn(FSTORE, variableSlots.get(varName)); // Range un float
       } else {
-        mv.visitVarInsn(ISTORE, variableSlots.get(varName));
+        mv.visitVarInsn(ISTORE, variableSlots.get(varName)); // Range on entier
       }
     }
 
@@ -145,18 +155,14 @@ public class CodeGenerator implements Opcodes {
       Label endLabel = new Label();
 
       generateExpression(ifNode.getCondition(), mv);
-
-      mv.visitJumpInsn(IFEQ, elseLabel);
-
+      mv.visitJumpInsn(IFEQ, elseLabel); // Si le résultat est faux, saut à l'étiquette else direct
       generateStatement(ifNode.getThenCaseBlock(), mv);
-
       mv.visitJumpInsn(GOTO, endLabel);
 
       mv.visitLabel(elseLabel);
       if (ifNode.getElseCaseBlock() != null) {
         generateStatement(ifNode.getElseCaseBlock(), mv);
       }
-
       mv.visitLabel(endLabel);
     }
 
@@ -165,15 +171,10 @@ public class CodeGenerator implements Opcodes {
       Label endLabel = new Label();
 
       mv.visitLabel(startLabel);
-
       generateExpression(whileNode.getCondition(), mv);
-
       mv.visitJumpInsn(IFEQ, endLabel);
-
       generateStatement(whileNode.getCodeInNode(), mv);
-
       mv.visitJumpInsn(GOTO, startLabel);
-
       mv.visitLabel(endLabel);
     }
 
@@ -312,19 +313,20 @@ public class CodeGenerator implements Opcodes {
   private String getDescriptor(String type) {
     if (type == null || type.isEmpty()) return "I";
 
-    String t = type.toUpperCase().trim();
+    String upper = type.toUpperCase().trim();
 
-    if (t.contains("ARRAY") || t.contains("[]")) {
-      String baseType = t.replace("ARRAY", "").replace("[]", "").trim();
+    if (upper.contains("ARRAY") || type.contains("[]")) {
+      String baseType = type.replaceAll("(?i)ARRAY", "").replace("[]", "").trim();
       return "[" + getDescriptor(baseType);
     }
 
-    switch (t) {
-      case "INT":    return "I";
-      case "FLOAT":  return "F";
-      case "BOOL":   return "Z";
+    switch (upper) {
+      case "INT": return "I";
+      case "FLOAT": return "F";
+      case "BOOL": return "Z";
       case "STRING": return "Ljava/lang/String;";
-      default:       return "L" + type + ";";
+      default:
+        return "L" + type + ";";
     }
   }
 
