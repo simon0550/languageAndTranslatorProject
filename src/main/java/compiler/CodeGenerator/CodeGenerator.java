@@ -67,6 +67,7 @@ public class CodeGenerator implements Opcodes {
 
   private void generateFunction(FunctionNode node){
     variableSlots.clear(); // On garantit que les variables locales ne gênent pas d'autres d'une autre méthode
+    localVariableTypes.clear();
     nextSlot = 0;
 
     String name = node.getName();
@@ -107,25 +108,34 @@ public class CodeGenerator implements Opcodes {
 
   private void generateStatement(Node node, MethodVisitor mv) {
     if (node == null) return;
-
     if (node instanceof LocalBlockNode) {
       for (Node sub : ((LocalBlockNode) node).getLocalNodes()) generateStatement(sub, mv);
     }
     else if (node instanceof AssignmentNode assignment) {
       String varName = ((IdNode) assignment.getIdentifier()).getName();
-
-      // On traite l'expression à droite du "="
       generateExpression(assignment.getExpression(), mv);
 
+      String typeDesc;
       if (variableSlots.containsKey(varName)) {
-        // Variable est déjà local, on l'écrase
-        mv.visitVarInsn(ISTORE, variableSlots.get(varName));
-      } else if (assignment.getType() instanceof EmptyNode) {
-        // Si elle n'a pas de type, c'est qu'elle est globale.
-        mv.visitFieldInsn(PUTSTATIC, this.className, varName, "I");
+        typeDesc = localVariableTypes.getOrDefault(varName, "I");
       } else {
-        // Nouvelle déclaration locale
+        String typeName = "INT";
+        Node typeNode = assignment.getType();
+
+        if (typeNode instanceof IdNode) {
+          typeName = ((IdNode) typeNode).getName();
+        } else if (typeNode != null) {
+          typeName = typeNode.getClass().getSimpleName().replace("Node", "").toUpperCase();
+        }
+
+        typeDesc = getDescriptor(typeName);
         variableSlots.put(varName, nextSlot++);
+        localVariableTypes.put(varName, typeDesc);
+      }
+
+      if (typeDesc.startsWith("L") || typeDesc.startsWith("[")) {
+        mv.visitVarInsn(ASTORE, variableSlots.get(varName));
+      } else {
         mv.visitVarInsn(ISTORE, variableSlots.get(varName));
       }
     }
@@ -300,11 +310,22 @@ public class CodeGenerator implements Opcodes {
   }
 
   private String getDescriptor(String type) {
-    if (type.equals("INT")) return "I";
-    if (type.equals("FLOAT")) return "F";
-    if (type.equals("BOOL")) return "Z";
-    if (type.equals("STRING")) return "Ljava/lang/String;";
-    return "L" + type + ";";
+    if (type == null || type.isEmpty()) return "I";
+
+    String t = type.toUpperCase().trim();
+
+    if (t.contains("ARRAY") || t.contains("[]")) {
+      String baseType = t.replace("ARRAY", "").replace("[]", "").trim();
+      return "[" + getDescriptor(baseType);
+    }
+
+    switch (t) {
+      case "INT":    return "I";
+      case "FLOAT":  return "F";
+      case "BOOL":   return "Z";
+      case "STRING": return "Ljava/lang/String;";
+      default:       return "L" + type + ";";
+    }
   }
 
   private void generateStructClass(CollectionDefNode node) {
