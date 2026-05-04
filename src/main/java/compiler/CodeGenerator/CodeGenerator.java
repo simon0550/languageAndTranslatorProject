@@ -17,6 +17,8 @@ public class CodeGenerator implements Opcodes {
   private Map<String, Integer> variableSlots = new HashMap<>();
   private int nextSlot = 0;
   private Map<String, byte[]> generatedClasses = new HashMap<>(); // On stocke le nom de la classe avec son code bianire
+  private Map<String, String> globalVariablesTypes = new HashMap<>();
+  private Map<String, String> localVariableTypes = new HashMap<>();
 
   public Map<String, byte[]> generate(Node root, String className) {
     this.generatedClasses.clear();
@@ -76,8 +78,12 @@ public class CodeGenerator implements Opcodes {
     } else if (node.getParameters() != null) {
       for (Node parameter : node.getParameters()) {
         ParameterNode param = (ParameterNode) parameter;
-        descBuilder.append("I");
-        variableSlots.put(param.getName(), nextSlot++);
+        String typeDesc = getDescriptor(param.getType());
+
+        descBuilder.append(typeDesc); 
+        variableSlots.put(param.getName(), nextSlot);
+        localVariableTypes.put(param.getName(), typeDesc);
+        nextSlot++;
       }
     }
     descBuilder.append(")");
@@ -213,10 +219,18 @@ public class CodeGenerator implements Opcodes {
     }
     else if (node instanceof IdNode idNode) {
       String name = idNode.getName();
+
       if (variableSlots.containsKey(name)) {
-        mv.visitVarInsn(ILOAD, variableSlots.get(name));
+        String type = localVariableTypes.get(name);
+        if (type != null && (type.startsWith("L") || type.startsWith("["))) {
+          mv.visitVarInsn(ALOAD, variableSlots.get(name));
+        } else {
+          mv.visitVarInsn(ILOAD, variableSlots.get(name));
+        }
       } else {
-        mv.visitFieldInsn(GETSTATIC, this.className, name, "I");
+        // C'est une variable globale
+        String typeDescriptor = globalVariablesTypes.getOrDefault(name, "I");
+        mv.visitFieldInsn(GETSTATIC, this.className, name, typeDescriptor);
       }
     }
     else if (node instanceof BinaryNode binaryNode) {
@@ -281,7 +295,7 @@ public class CodeGenerator implements Opcodes {
   private void generateGlobalVariable(DeclarationNode node) {
     String name = node.getName();
     String typeDescriptor = getDescriptor(node.getType());
-    // Les variables sont public static puisqu'on est au niveau global du programme
+    globalVariablesTypes.put(name, typeDescriptor);
     classWriter.visitField(ACC_PUBLIC + ACC_STATIC, name, typeDescriptor, null, null).visitEnd();
   }
 
