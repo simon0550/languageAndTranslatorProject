@@ -54,6 +54,13 @@ public class CodeGenerator implements Opcodes {
         browse(declaration);
       }
     }
+    else if (node instanceof AssignmentNode assignment) {
+      String varName = ((IdNode) assignment.getIdentifier()).getName();
+      String typeDesc = getDescriptor("INT");
+
+      globalVariablesTypes.put(varName, typeDesc);
+      classWriter.visitField(ACC_PUBLIC + ACC_STATIC, varName, typeDesc, null, null).visitEnd();
+    }
     else if (node instanceof FunctionNode) { // Vers la génération de méthodes
       generateFunction((FunctionNode) node);
     }
@@ -147,6 +154,16 @@ public class CodeGenerator implements Opcodes {
         mv.visitVarInsn(FSTORE, variableSlots.get(varName)); // Range un float
       } else {
         mv.visitVarInsn(ISTORE, variableSlots.get(varName)); // Range on entier
+      }
+    }
+
+    else if (node instanceof DeclarationNode declaration) {
+      String varName = declaration.getName();
+      String typeDesc = getDescriptor(declaration.getType());
+
+      if (!variableSlots.containsKey(varName)) {
+        variableSlots.put(varName, nextSlot++);
+        localVariableTypes.put(varName, typeDesc);
       }
     }
 
