@@ -54,6 +54,7 @@ public class CodeGenerator implements Opcodes {
         browse(declaration);
       }
     }
+    // Si c'est une assignation en dehors d'une fonction, on se doutr que c'est une variablr globale
     else if (node instanceof AssignmentNode assignment) {
       String varName = ((IdNode) assignment.getIdentifier()).getName();
       String typeDesc = getDescriptor("INT");
@@ -122,48 +123,45 @@ public class CodeGenerator implements Opcodes {
 
     else if (node instanceof AssignmentNode assignment) {
       String varName = ((IdNode) assignment.getIdentifier()).getName();
-      generateExpression(assignment.getExpression(), mv);
+      generateExpression(assignment.getExpression(), mv); // On calcule la valeur à droite du "="
 
-      String typeDescriptor;
-      if (variableSlots.containsKey(varName)) {
-        typeDescriptor = localVariableTypes.getOrDefault(varName, "I");
-      } else {
-        String typeName = "INT";
-        Node typeNode = assignment.getType();
-
-        if (typeNode instanceof IdNode) {
-          typeName = ((IdNode) typeNode).getName();
-        } else if (typeNode != null && !(typeNode instanceof EmptyNode)) {
-          String rawType = typeNode.toString().toUpperCase();
-          if (rawType.contains("INT")) typeName = "INT";
-          else if (rawType.contains("FLOAT")) typeName = "FLOAT";
-          else if (rawType.contains("BOOL")) typeName = "BOOL";
-          else if (rawType.contains("STRING")) typeName = "STRING";
-          else if (rawType.contains("ARRAY")) typeName = rawType; // Pour les tableaux
-          else typeName = "INT";
-        }
-
-        typeDescriptor = getDescriptor(typeName);
-        variableSlots.put(varName, nextSlot++);
-        localVariableTypes.put(varName, typeDescriptor);
+      if (variableSlots.containsKey(varName)) { // Variable locale
+        String typeDescriptor = localVariableTypes.get(varName);
+        storeVariable(mv, typeDescriptor, variableSlots.get(varName));
       }
-
-      if (typeDescriptor.startsWith("L") || typeDescriptor.startsWith("[")) {
-        mv.visitVarInsn(ASTORE, variableSlots.get(varName)); // Range un objet ou un tableau
-      } else if (typeDescriptor.equals("F")) {
-        mv.visitVarInsn(FSTORE, variableSlots.get(varName)); // Range un float
-      } else {
-        mv.visitVarInsn(ISTORE, variableSlots.get(varName)); // Range on entier
+      else if (globalVariablesTypes.containsKey(varName)) { // Variable globale (statique)
+        String typeDescriptor = globalVariablesTypes.get(varName);
+        mv.visitFieldInsn(PUTSTATIC, this.className, varName, typeDescriptor);
+      }
+      else {
+        // Cas d'une déclaration implicite
+        int slot = nextSlot++;
+        String typeDescriptor = "I";
+        variableSlots.put(varName, slot);
+        localVariableTypes.put(varName, typeDescriptor);
+        storeVariable(mv, typeDescriptor, slot);
       }
     }
 
     else if (node instanceof DeclarationNode declaration) {
       String varName = declaration.getName();
-      String typeDesc = getDescriptor(declaration.getType());
+      String descriptor = getDescriptor(declaration.getType());
 
       if (!variableSlots.containsKey(varName)) {
-        variableSlots.put(varName, nextSlot++);
-        localVariableTypes.put(varName, typeDesc);
+        int slot = nextSlot++;
+        variableSlots.put(varName, slot);
+        localVariableTypes.put(varName, descriptor);
+
+        if (descriptor.equals("F")) {
+          mv.visitInsn(FCONST_0);
+          mv.visitVarInsn(FSTORE, slot);
+        } else if (descriptor.equals("Ljava/lang/String;") || descriptor.startsWith("L") || descriptor.startsWith("[")) {
+          mv.visitInsn(ACONST_NULL);
+          mv.visitVarInsn(ASTORE, slot);
+        } else {
+          mv.visitInsn(ICONST_0);
+          mv.visitVarInsn(ISTORE, slot);
+        }
       }
     }
 
@@ -206,6 +204,13 @@ public class CodeGenerator implements Opcodes {
     }
   }
 
+  // On génère l'instrcution en fonction du type de descripteur
+  private void storeVariable(MethodVisitor mv, String typeDescriptor, int slot) {
+    if (typeDescriptor.equals("F")) mv.visitVarInsn(FSTORE, slot);
+    else if (typeDescriptor.startsWith("L") || typeDescriptor.startsWith("[")) mv.visitVarInsn(ASTORE, slot);
+    else mv.visitVarInsn(ISTORE, slot);
+  }
+
   private void generateFunctionCall(FunctionCallNode functionCallNode, MethodVisitor mv) {
     if (functionCallNode.getName().equals("println")) {
       mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
@@ -226,8 +231,6 @@ public class CodeGenerator implements Opcodes {
 
   private void generateExpression(Node node, MethodVisitor mv) {
     if (node == null) return;
-
-    System.out.println("Génération expression pour : " + node.getClass().getSimpleName());
 
     if (node instanceof IntNode intNode) {
       String value = intNode.getValue();
