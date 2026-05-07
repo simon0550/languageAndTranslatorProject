@@ -212,20 +212,25 @@ public class CodeGenerator implements Opcodes {
   }
 
   private void generateFunctionCall(FunctionCallNode functionCallNode, MethodVisitor mv) {
-    if (functionCallNode.getName().equals("println")) {
+    String name = functionCallNode.getName();
+
+    if (name.equals("println")) {
       mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
       generateExpression(functionCallNode.getParams().get(0), mv);
       mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
+    }
+    else if (name.equals("read_INT")) {
+      mv.visitMethodInsn(INVOKESTATIC, "AppRuntime", "read_INT", "()I", false);
     }
     else {
       StringBuilder descBuilder = new StringBuilder("(");
       for (Node arg : functionCallNode.getParams()) {
         generateExpression(arg, mv);
-        descBuilder.append("I");
+        descBuilder.append("I"); // On assume INT pour simplifier
       }
       descBuilder.append(")I");
 
-      mv.visitMethodInsn(INVOKESTATIC, this.className, functionCallNode.getName(), descBuilder.toString(), false);
+      mv.visitMethodInsn(INVOKESTATIC, this.className, name, descBuilder.toString(), false);
     }
   }
 
