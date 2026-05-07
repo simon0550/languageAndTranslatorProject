@@ -193,11 +193,9 @@ public class CodeGenerator implements Opcodes {
       mv.visitLabel(endLabel);
     }
 
-    // Cas du println
     else if (node instanceof FunctionCallNode) {
       generateFunctionCall((FunctionCallNode) node, mv);
     }
-    // Cas du Return
     else if (node instanceof ReturnNode) {
       generateExpression(((ReturnNode) node).getExpression(), mv);
       mv.visitInsn(IRETURN);
@@ -226,7 +224,7 @@ public class CodeGenerator implements Opcodes {
       StringBuilder descBuilder = new StringBuilder("(");
       for (Node arg : functionCallNode.getParams()) {
         generateExpression(arg, mv);
-        descBuilder.append("I"); // On assume INT pour simplifier
+        descBuilder.append("I");
       }
       descBuilder.append(")I");
 
@@ -264,7 +262,6 @@ public class CodeGenerator implements Opcodes {
           mv.visitVarInsn(ILOAD, variableSlots.get(name));
         }
       } else {
-        // C'est une variable globale
         String typeDescriptor = globalVariablesTypes.getOrDefault(name, "I");
         mv.visitFieldInsn(GETSTATIC, this.className, name, typeDescriptor);
       }
