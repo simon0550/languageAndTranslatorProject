@@ -210,7 +210,6 @@ public class CodeGenerator implements Opcodes {
       Label endLabel = new Label();
 
       String varName = ((IdNode) forNode.getInit()).getName();
-      System.out.println(varName);
       int varSlot = variableSlots.get(varName);
       generateExpression(forNode.getStart(), mv);
       mv.visitVarInsn(ISTORE, varSlot);
@@ -421,12 +420,11 @@ public class CodeGenerator implements Opcodes {
     int paramSlot = 1;
 
     for (Node prop : node.getProperties()) {
-      if (prop instanceof DeclarationNode) {
-        DeclarationNode field = (DeclarationNode) prop;
-        String desc = getDescriptor(field.getType());
-
+      if (prop instanceof DeclarationNode field) {
+          String desc = getDescriptor(field.getType());
+        //empile this pour faire ref a l'objet
         mv.visitVarInsn(ALOAD, 0);
-
+        //empile le parametre
         if (desc.equals("F")) {
           mv.visitVarInsn(FLOAD, paramSlot);
         } else if (desc.startsWith("L") || desc.startsWith("[")) {
@@ -434,6 +432,7 @@ public class CodeGenerator implements Opcodes {
         } else {
           mv.visitVarInsn(ILOAD, paramSlot);
         }
+        // dépile le parametre et this pour creer this.x = x par exemple
         mv.visitFieldInsn(PUTFIELD, structName, field.getName(), desc);
         paramSlot++;
       }
