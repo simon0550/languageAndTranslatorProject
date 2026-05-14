@@ -4,65 +4,84 @@ import compiler.Lexer.Lexer;
 import compiler.Parser.Node;
 import compiler.Parser.Parser;
 import compiler.SemanticAnalyzer.SemanticAnalyzer;
+
+import java.io.File;
+import java.io.FileReader;
 import java.util.Map;
-import junit.framework.TestCase;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.FileOutputStream;
 import java.io.StringReader;
 
-public class TestCodeGenerator extends TestCase {
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+
+public class TestCodeGenerator {
+  Lexer lexer;
+  Parser parser;
+  Node ast;
+
+  String sourceCode = "# Good luck\n" +
+          "final INT i = 3;\n" +
+          "final FLOAT j = 3.2*5.0;\n" +
+          "final INT k = i*3;\n" +
+          "final STRING message = \"Hello\";\n" +
+          "final BOOL isEmpty  = true;\n" +
+          "\n" +
+          "coll Point {\n" +
+          "    INT x;\n" +
+          "    INT y;\n" +
+          "}\n" +
+          "coll Person {\n" +
+          "    STRING name;\n" +
+          "    Point location;\n" +
+          "    INT[] history;\n" +
+          "}\n" +
+          "\n" +
+          "INT a = 3;\n" +
+          "INT[] c  = INT ARRAY [5];\n" +
+          "Person d = Person(\"me\", Point(3,7), INT ARRAY [i*2] );\n" +
+          "\n" +
+          "def INT square(INT v) {\n" +
+          "    return v*v;\n" +
+          "}\n" +
+          "\n" +
+          "def Point copyPoints(Point[] p) {\n" +
+          "    return Point(p[0].x+p[1].x, p[0].y+p[1].y);\n" +
+          "}\n" +
+          "\n" +
+          "def main() {\n" +
+          "    INT value = read_INT();\n" +
+          "    println(square(value));\n" +
+          "    INT i;\n" +
+          "    for (i; 1 -> 100; i+1) {\n" +
+          "        while (value=/=3) {\n" +
+          "            if (i > 10){\n" +
+          "                value = value - 1;\n" +
+          "            } else {\n" +
+          "                println(message);\n" +
+          "            }\n" +
+          "        }\n" +
+          "    }\n" +
+          "    i = (i+2)*2;\n" +
+          "}";
+
+  @Before
+  public void setUp() throws Exception {
+    lexer = new Lexer(new FileReader("test.lang"));
+    parser = new Parser(lexer);
+    ast = parser.getAST();
+  }
+
+  @Test
 
   public void testSimpleCompilation() {
-    String sourceCode = "# Good luck\n" +
-        "final INT i = 3;\n" +
-        "final FLOAT j = 3.2*5.0;\n" +
-        "final INT k = i*3;\n" +
-        "final STRING message = \"Hello\";\n" +
-        "final BOOL isEmpty  = true;\n" +
-        "\n" +
-        "coll Point {\n" +
-        "    INT x;\n" +
-        "    INT y;\n" +
-        "}\n" +
-        "coll Person {\n" +
-        "    STRING name;\n" +
-        "    Point location;\n" +
-        "    INT[] history;\n" +
-        "}\n" +
-        "\n" +
-        "INT a = 3;\n" +
-        "INT[] c  = INT ARRAY [5];\n" +
-        "Person d = Person(\"me\", Point(3,7), INT ARRAY [i*2] );\n" +
-        "\n" +
-        "def INT square(INT v) {\n" +
-        "    return v*v;\n" +
-        "}\n" +
-        "\n" +
-        "def Point copyPoints(Point[] p) {\n" +
-        "    return Point(p[0].x+p[1].x, p[0].y+p[1].y);\n" +
-        "}\n" +
-        "\n" +
-        "def main() {\n" +
-        "    INT value = read_INT();\n" +
-        "    println(square(value));\n" +
-        "    INT i;\n" +
-        "    for (i; 1 -> 100; i+1) {\n" +
-        "        while (value=/=3) {\n" +
-        "            if (i > 10){\n" +
-        "                value = value - 1;\n" +
-        "            } else {\n" +
-        "                println(message);\n" +
-        "            }\n" +
-        "        }\n" +
-        "    }\n" +
-        "    i = (i+2)*2;\n" +
-        "}";
-
     try {
-      Lexer lexer = new Lexer(new StringReader(sourceCode));
-      Parser parser = new Parser(lexer);
-      Node ast = parser.getAST();
-
       SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
       semanticAnalyzer.analyseTree(ast);
       System.out.println("Analyse sémantique réussie.");
@@ -82,7 +101,12 @@ public class TestCodeGenerator extends TestCase {
 
     } catch (Exception e) {
       e.printStackTrace();
+
       fail("Erreur pendant la compilation : " + e.getMessage());
     }
   }
+
+
+
+
 }

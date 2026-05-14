@@ -57,7 +57,14 @@ public class CodeGenerator implements Opcodes {
     // Si c'est une assignation en dehors d'une fonction, on se doutr que c'est une variablr globale
     else if (node instanceof AssignmentNode assignment) {
       String varName = ((IdNode) assignment.getIdentifier()).getName();
-      String typeDesc = getDescriptor("INT");
+
+      String typeName = "";
+      if (assignment.getType() instanceof TypeNode typeNode) {
+        typeName= typeNode.getType();
+      } else if (assignment.getType() instanceof IdNode idNode) {
+        typeName = idNode.getName();
+      }
+      String typeDesc = getDescriptor(typeName);
 
       globalVariablesTypes.put(varName, typeDesc);
       classWriter.visitField(ACC_PUBLIC + ACC_STATIC, varName, typeDesc, null, null).visitEnd();
@@ -77,7 +84,6 @@ public class CodeGenerator implements Opcodes {
     variableSlots.clear(); // On garantit que les variables locales ne gênent pas d'autres d'une autre méthode
     localVariableTypes.clear();
     nextSlot = 0;
-
     String name = node.getName();
 
     StringBuilder descBuilder = new StringBuilder("(");
@@ -199,6 +205,32 @@ public class CodeGenerator implements Opcodes {
     else if (node instanceof ReturnNode) {
       generateExpression(((ReturnNode) node).getExpression(), mv);
       mv.visitInsn(IRETURN);
+    } else if (node instanceof ForNode forNode) {
+      Label startLabel = new Label();
+      Label endLabel = new Label();
+
+      String varName = ((IdNode) forNode.getInit()).getName();
+      System.out.println(varName);
+      int varSlot = variableSlots.get(varName);
+      generateExpression(forNode.getStart(), mv);
+      mv.visitVarInsn(ISTORE, varSlot);
+      mv.visitLabel(startLabel);
+      mv.visitVarInsn(ILOAD, varSlot);
+      generateExpression(forNode.getEnd(), mv);
+      mv.visitJumpInsn(IF_ICMPGT, endLabel);
+      generateStatement(forNode.getBody(), mv);
+      generateExpression(forNode.getStep(), mv);
+      mv.visitVarInsn(ISTORE, varSlot);
+      mv.visitJumpInsn(GOTO, startLabel);
+      mv.visitLabel(endLabel);
+    }
+    else if (node instanceof StringNode stringNode) {
+      String text = stringNode.getContent();
+      if (text.startsWith("\"") && text.endsWith("\"")) {
+        text = text.substring(1, text.length() - 1);
+      }
+      mv.visitLdcInsn(text);
+
     }
   }
 
@@ -215,7 +247,13 @@ public class CodeGenerator implements Opcodes {
     if (name.equals("println")) {
       mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
       generateExpression(functionCallNode.getParams().get(0), mv);
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
+      Node arg = functionCallNode.getParams().get(0);
+      boolean isString = false;
+      if (arg instanceof StringNode) isString = true;
+      if (arg instanceof IdNode && ((IdNode)arg).getName().equals("message")) isString = true;
+
+      String desc = isString ? "(Ljava/lang/String;)V" : "(I)V";
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", desc, false);
     }
     else if (name.equals("read_INT")) {
       mv.visitMethodInsn(INVOKESTATIC, "AppRuntime", "read_INT", "()I", false);
@@ -233,7 +271,9 @@ public class CodeGenerator implements Opcodes {
   }
 
   private void generateExpression(Node node, MethodVisitor mv) {
-    if (node == null) return;
+    if (node == null) {
+      throw new RuntimeException("node is null");
+    };
 
     if (node instanceof IntNode intNode) {
       String value = intNode.getValue();
@@ -277,7 +317,7 @@ public class CodeGenerator implements Opcodes {
         case "*" -> mv.visitInsn(IMUL);
         case "/" -> mv.visitInsn(IDIV);
         case "%" -> mv.visitInsn(IREM);
-        case "==", "!=", "<", ">", "<=", ">=" -> generateComparison(op, mv);
+        case "==", "!=", "<", ">", "<=", ">=", "=/=" -> generateComparison(op, mv);
         default -> throw new UnsupportedOperationException("Opérateur non géré : " + op);
       }
     }
@@ -314,7 +354,8 @@ public class CodeGenerator implements Opcodes {
       case ">"  -> IF_ICMPGT;
       case "<=" -> IF_ICMPLE;
       case ">=" -> IF_ICMPGE;
-      default   -> throw new IllegalStateException();
+      case "=/=" -> IF_ICMPNE;
+      default   -> throw new UnsupportedOperationException();
     };
     mv.visitJumpInsn(jumpOpcode, trueLabel);
     mv.visitInsn(ICONST_0);
@@ -358,21 +399,48 @@ public class CodeGenerator implements Opcodes {
 
     structClassWriter.visit(V1_8, ACC_PUBLIC, structName, null, "java/lang/Object", null);
 
+    StringBuilder constructorDesc = new StringBuilder("(");
+
     for (Node prop : node.getProperties()) {
       if (prop instanceof DeclarationNode) {
         DeclarationNode field = (DeclarationNode) prop;
         String desc = getDescriptor(field.getType());
+
+
         structClassWriter.visitField(ACC_PUBLIC, field.getName(), desc, null, null).visitEnd();
+        constructorDesc.append(desc);
       }
     }
+    constructorDesc.append(")V");
 
-    MethodVisitor methodVisitor = structClassWriter.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-    methodVisitor.visitCode();
-    methodVisitor.visitVarInsn(ALOAD, 0);
-    methodVisitor.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-    methodVisitor.visitInsn(RETURN);
-    methodVisitor.visitMaxs(1, 1);
-    methodVisitor.visitEnd();
+    MethodVisitor mv = structClassWriter.visitMethod(ACC_PUBLIC, "<init>", constructorDesc.toString(), null, null);
+    mv.visitCode();
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+
+    int paramSlot = 1;
+
+    for (Node prop : node.getProperties()) {
+      if (prop instanceof DeclarationNode) {
+        DeclarationNode field = (DeclarationNode) prop;
+        String desc = getDescriptor(field.getType());
+
+        mv.visitVarInsn(ALOAD, 0);
+
+        if (desc.equals("F")) {
+          mv.visitVarInsn(FLOAD, paramSlot);
+        } else if (desc.startsWith("L") || desc.startsWith("[")) {
+          mv.visitVarInsn(ALOAD, paramSlot);
+        } else {
+          mv.visitVarInsn(ILOAD, paramSlot);
+        }
+        mv.visitFieldInsn(PUTFIELD, structName, field.getName(), desc);
+        paramSlot++;
+      }
+    }
+    mv.visitInsn(RETURN);
+    mv.visitMaxs(0, 0);
+    mv.visitEnd();
 
     structClassWriter.visitEnd();
     generatedClasses.put(structName, structClassWriter.toByteArray());
