@@ -6,6 +6,7 @@ import compiler.Parser.Parser;
 import compiler.SemanticAnalyzer.SemanticAnalyzer;
 
 import java.io.FileReader;
+import java.io.StringReader;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,6 +21,7 @@ public class TestCodeGenerator {
   Lexer lexer;
   Parser parser;
   Node ast;
+  SemanticAnalyzer semanticAnalyzer;
 
   String sourceCode = "# Good luck\n" +
           "final INT i = 3;\n" +
@@ -71,13 +73,14 @@ public class TestCodeGenerator {
     lexer = new Lexer(new FileReader("test.lang"));
     parser = new Parser(lexer);
     ast = parser.getAST();
+    semanticAnalyzer = new SemanticAnalyzer();
   }
 
   @Test
 
   public void testSimpleCompilation() {
     try {
-      SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
+
       semanticAnalyzer.analyseTree(ast);
       System.out.println("Analyse sémantique réussie.");
 
@@ -102,6 +105,38 @@ public class TestCodeGenerator {
   }
 
 
-
-
+  @Test
+  public void testBaseCompilation() {
+    String text = """
+            def main() {
+                println("Test String");
+                println(42);
+                print("Hello ");
+                print(100);
+                println("");
+                varInt = 99;
+                println(varInt);
+                println(3.14);
+                println(true);
+                println(5 + 5);
+                println();
+            }""";
+    Lexer l = new Lexer(new StringReader(text));
+    Parser p = new Parser(l);
+    Node n = p.getAST();
+    semanticAnalyzer.analyseTree(n);
+    try {
+      CodeGenerator generator = new CodeGenerator();
+      Map<String, byte[]> classes = generator.generate(n, "TestBase");
+      for (Map.Entry<String, byte[]> entry : classes.entrySet()) {
+        String fileName = entry.getKey() + ".class";
+        try (FileOutputStream fos = new FileOutputStream(fileName)) {
+          fos.write(entry.getValue());
+          System.out.println("Fichier " + fileName + " généré avec succès.");
+        }
+      }
+    }catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
 }

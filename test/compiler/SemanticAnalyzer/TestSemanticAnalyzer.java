@@ -285,6 +285,7 @@ public class TestSemanticAnalyzer extends TestCase {
             "}\n" +
             "\n" +
             "def main() {\n" +
+            "    print(message)" +
             "    INT value = read_INT();\n" +
             "    println(square(value));\n" +
             "    INT i;\n" +

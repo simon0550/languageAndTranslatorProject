@@ -2,10 +2,7 @@ package compiler.SemanticAnalyzer;
 
 import compiler.Parser.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SemanticAnalyzer {
 
@@ -17,8 +14,37 @@ public class SemanticAnalyzer {
     symbolTable.addNewScope();
     symbolTable.addNewVariable("read_INT", "INT", true);
     typeParamList.put("read_INT", new ArrayList<>());
+
+    symbolTable.addNewVariable("read_FLOAT", "FLOAT", true);
+    typeParamList.put("read_FLOAT", new ArrayList<>());
+
+    symbolTable.addNewVariable("read_STRING", "STRING", true);
+    typeParamList.put("read_STRING", new ArrayList<>());
+
     symbolTable.addNewVariable("println", "VOID", true);
     typeParamList.put("println", null);
+
+    symbolTable.addNewVariable("print", "VOID", true);
+    typeParamList.put("print", null);
+
+    symbolTable.addNewVariable("print_INT", "VOID", true);
+    typeParamList.put("print_INT", List.of("INT"));
+
+    symbolTable.addNewVariable("print_FLOAT", "VOID", true);
+    typeParamList.put("print_FLOAT", List.of("FLOAT"));
+    symbolTable.addNewVariable("not", "BOOL", true);
+    typeParamList.put("not", List.of("BOOL"));
+
+    symbolTable.addNewVariable("str", "STRING", true);
+    typeParamList.put("str", List.of("INT"));
+
+    symbolTable.addNewVariable("floor", "INT", true);
+    typeParamList.put("floor", List.of("FLOAT"));
+
+    symbolTable.addNewVariable("ceil", "INT", true);
+    typeParamList.put("ceil", List.of("FLOAT"));
+    symbolTable.addNewVariable("length", "INT", true);
+    typeParamList.put("length", null);
     browse(root);
   }
 
@@ -89,7 +115,7 @@ public class SemanticAnalyzer {
     String returnType = symbolTable.containsType(fname);
 
     if (returnType == null) {
-      System.err.println("ScopeError");
+      System.err.println("ScopeError1");
       System.exit(2);
     }
 
@@ -111,7 +137,7 @@ public class SemanticAnalyzer {
           System.exit(2);
         }
       }
-    } else if (fname.equals("println")) {
+    } else if (fname.equals("println") || fname.equals("print")){
       for (Node arg : parameters) evaluateType(arg);
     }
 
@@ -153,7 +179,7 @@ public class SemanticAnalyzer {
     String name = ((IdNode) node.getName()).getName();
 
     if (symbolTable.isDeclaredInCurrentScope(name)) {
-      System.err.println("ScopeError");
+      System.err.println("2");
       System.exit(2);
     }
 
@@ -172,7 +198,7 @@ public class SemanticAnalyzer {
     String arrayName = node.getName().toString();
     String arrayType = symbolTable.containsType(arrayName);
     if (arrayType == null) {
-      System.err.println("ScopeError");
+      System.err.println("ScopeError3");
       System.exit(2);
     }
     String indexType = evaluateType(node.getIndex());
@@ -203,21 +229,26 @@ public class SemanticAnalyzer {
     if (!(assignmentNode.getType() instanceof EmptyNode)) {
       typeCoteGauche = ((TypeNode) assignmentNode.getType()).getTypeName();
       if (!symbolTable.addNewVariable(nomVariable, typeCoteGauche, assignmentNode.isFinal())) {
-        System.err.println("ScopeError");
+        System.err.println("ScopeError4");
         System.exit(2);
       }
     }
     else {
       typeCoteGauche = symbolTable.containsType(nomVariable);
-      if (typeCoteGauche == null || symbolTable.variableIsFinal(nomVariable)) {
-        System.err.println("ScopeError");
+      if (typeCoteGauche == null ) {
+        String typeCoteDroit = evaluateType(assignmentNode.getExpression());
+        symbolTable.addNewVariable(nomVariable, typeCoteDroit, false);
+        typeCoteGauche = typeCoteDroit;
+
+      } else if (symbolTable.variableIsFinal(nomVariable)) {
+        System.err.println("ScopeError5");
         System.exit(2);
       }
     }
 
     String typeCoteDroit = evaluateType(assignmentNode.getExpression());
     if (!typeCoteGauche.equals(typeCoteDroit) && !typeCoteDroit.equals("UNKNOWN")) {
-      System.err.println("TypeError");
+      System.err.println("TypeError6");
       System.exit(2);
     }
   }

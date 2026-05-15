@@ -13,20 +13,17 @@ import java.util.Map;
 
 public class Compiler {
     public static void main(String[] args) {
-        if (args.length < 1) {
-            System.err.println("Usage: gradle run --args=\"source.lang [-o output.class]\"");
-            System.exit(1);
-        }
-
-        String inputPath = args[0];
-        String outputPath = "Main.class";
-
+        String outputPath = "test.class";
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals("-o") && i + 1 < args.length) {
                 outputPath = args[i + 1];
                 break;
             }
         }
+        File outFile = new File(outputPath);
+        String parentDir = outFile.getParent();
+        String dirPrefix = (parentDir == null) ? "" : parentDir + File.separator;
+        String inputPath = args[0];
 
         try {
             Lexer lexer = new Lexer(new FileReader(inputPath));
@@ -36,20 +33,13 @@ public class Compiler {
             SemanticAnalyzer s = new SemanticAnalyzer();
             s.analyseTree(ast);
 
-            File outFile = new File(outputPath);
             String className = outFile.getName().replace(".class", "");
-
-            File parentDir = outFile.getParentFile();
-            if (parentDir != null && !parentDir.exists()) {
-                parentDir.mkdirs();
-            }
 
             CodeGenerator cg = new CodeGenerator();
             Map<String, byte[]> classes = cg.generate(ast, className);
-
             for (Map.Entry<String, byte[]> entry : classes.entrySet()) {
-                File classFile = new File(parentDir, entry.getKey() + ".class");
-                try (FileOutputStream fos = new FileOutputStream(classFile)) {
+                String fileName = dirPrefix + entry.getKey() + ".class";
+                try (FileOutputStream fos = new FileOutputStream(fileName)) {
                     fos.write(entry.getValue());
                 }
             }

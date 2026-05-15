@@ -293,16 +293,39 @@ public class CodeGenerator implements Opcodes {
   private void generateFunctionCall(FunctionCallNode functionCallNode, MethodVisitor mv) {
     String name = functionCallNode.getName();
 
-    if (name.equals("println")) {
-      mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-      generateExpression(functionCallNode.getParams().get(0), mv);
-      Node arg = functionCallNode.getParams().get(0);
-      boolean isString = false;
-      if (arg instanceof StringNode) isString = true;
-      if (arg instanceof IdNode && ((IdNode)arg).getName().equals("message")) isString = true;
+    if (name.equals("println") || name.equals("print") || name.equals("write") || name.equals("print_INT") || name.equals("print_FLOAT")) {
 
-      String desc = isString ? "(Ljava/lang/String;)V" : "(I)V";
-      mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", desc, false);
+      mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+
+      String javaMethodName = name.equals("println") ? "println" : "print";
+
+      if (functionCallNode.getParams().isEmpty()) {
+        mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "()V", false);
+      } else {
+        Node arg = functionCallNode.getParams().get(0);
+
+        generateExpression(arg, mv);
+        String argTypeDesc = "I";
+
+        if (arg instanceof StringNode) {
+          argTypeDesc = "Ljava/lang/String;";
+        } else if (arg instanceof FloatNode) {
+          argTypeDesc = "F";
+        } else if (arg instanceof BoolNode) {
+          argTypeDesc = "Z";
+        } else if (arg instanceof IdNode) {
+          String varName = ((IdNode) arg).getName();
+          if (localVariableTypes.containsKey(varName)) {
+            argTypeDesc = localVariableTypes.get(varName);
+          } else if (globalVariablesTypes.containsKey(varName)) {
+            argTypeDesc = globalVariablesTypes.get(varName);
+          }
+        }
+
+        String methodSignature = "(" + argTypeDesc + ")V";
+
+        mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", javaMethodName, methodSignature, false);
+      }
     }
     else if (name.equals("read_INT")) {
       mv.visitMethodInsn(INVOKESTATIC, "AppRuntime", "read_INT", "()I", false);
