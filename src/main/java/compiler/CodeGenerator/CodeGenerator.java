@@ -21,6 +21,7 @@ public class CodeGenerator implements Opcodes {
   private Map<String, String> localVariableTypes = new HashMap<>();
   private String currentReturnTypeDesc = "I";
   private Map<String, String> functionReturnTypes = new HashMap<>();
+  private Map<String, String> structConstructors = new HashMap<>();
 
   public Map<String, byte[]> generate(Node root, String className) {
     this.generatedClasses.clear();
@@ -58,6 +59,16 @@ public class CodeGenerator implements Opcodes {
         if (decl instanceof FunctionNode fn) {
           String retDesc = getDescriptor(fn.getRetType());
           functionReturnTypes.put(fn.getName(), retDesc);
+        }
+        else if (decl instanceof CollectionDefNode structDef) {
+          StringBuilder constructorDesc = new StringBuilder("(");
+          for (Node prop : structDef.getProperties()) {
+            if (prop instanceof DeclarationNode) {
+              constructorDesc.append(getDescriptor(((DeclarationNode) prop).getType()));
+            }
+          }
+          constructorDesc.append(")V");
+          structConstructors.put(structDef.getName(), constructorDesc.toString());
         }
       }
     }
@@ -286,6 +297,14 @@ public class CodeGenerator implements Opcodes {
     }
     else if (name.equals("read_INT")) {
       mv.visitMethodInsn(INVOKESTATIC, "AppRuntime", "read_INT", "()I", false);
+    }
+    else if (structConstructors.containsKey(name)) {
+      mv.visitTypeInsn(NEW, name);
+      mv.visitInsn(DUP);
+      for (Node arg : functionCallNode.getParams()) {
+        generateExpression(arg, mv);
+      }
+      mv.visitMethodInsn(INVOKESPECIAL, name, "<init>", structConstructors.get(name), false);
     }
     else {
       StringBuilder descBuilder = new StringBuilder("(");

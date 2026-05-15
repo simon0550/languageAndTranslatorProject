@@ -5,17 +5,12 @@ import compiler.Parser.Node;
 import compiler.Parser.Parser;
 import compiler.SemanticAnalyzer.SemanticAnalyzer;
 
-import java.io.File;
 import java.io.FileReader;
 import java.util.Map;
-
-import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.FileOutputStream;
-import java.io.StringReader;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
