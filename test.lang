@@ -33,7 +33,7 @@ def main() {
     println(square(value));
     INT i;
     for (i; 1 -> 100; i+1) {
-        while (value=/=3) {
+        if (value=/=3) {
             if (i > 10){
                 value = value - 1;
             } else {

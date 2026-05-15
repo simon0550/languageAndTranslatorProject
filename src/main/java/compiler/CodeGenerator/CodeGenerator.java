@@ -34,8 +34,15 @@ public class CodeGenerator implements Opcodes {
     // V1_8 est la version de Java
     classWriter.visit(V1_8, ACC_PUBLIC, className, null, "java/lang/Object", null);
 
+    MethodVisitor clinitVisitor = classWriter.visitMethod(ACC_STATIC, "<clinit>", "()V", null, null);
+    clinitVisitor.visitCode();
+
     generateConstructor();
-    browse(root); // Lancement du parcours de l'arbre AST
+    browse(root, clinitVisitor); // Lancement du parcours de l'arbre AST
+
+    clinitVisitor.visitInsn(RETURN);
+    clinitVisitor.visitMaxs(0, 0);
+    clinitVisitor.visitEnd();
 
     classWriter.visitEnd();
     generatedClasses.put(className, classWriter.toByteArray()); // On stocke le résultat dans le dictionneaire
@@ -74,26 +81,28 @@ public class CodeGenerator implements Opcodes {
     }
   }
 
-  private void browse(Node node) {
-    if (node instanceof ProgramNode) {
-      for (Node declaration : ((ProgramNode) node).getDeclarations()) {
-        browse(declaration);
+  private void browse(Node node, MethodVisitor clinit) {
+    if (node instanceof ProgramNode program) {
+      for (Node declaration : program.getDeclarations()) {
+        browse(declaration, clinit);
       }
     }
-    // Si c'est une assignation en dehors d'une fonction, on se doutr que c'est une variablr globale
     else if (node instanceof AssignmentNode assignment) {
       String varName = ((IdNode) assignment.getIdentifier()).getName();
 
-      String typeName = "";
+      String typeName = "int";
       if (assignment.getType() instanceof TypeNode typeNode) {
-        typeName= typeNode.getType();
+        typeName = typeNode.getType();
       } else if (assignment.getType() instanceof IdNode idNode) {
         typeName = idNode.getName();
       }
       String typeDesc = getDescriptor(typeName);
 
-      globalVariablesTypes.put(varName, typeDesc);
       classWriter.visitField(ACC_PUBLIC + ACC_STATIC, varName, typeDesc, null, null).visitEnd();
+      globalVariablesTypes.put(varName, typeDesc);
+
+      generateExpression(assignment.getExpression(), clinit);
+      clinit.visitFieldInsn(PUTSTATIC, this.className, varName, typeDesc);
     }
     else if (node instanceof FunctionNode) { // Vers la génération de méthodes
       generateFunction((FunctionNode) node);
