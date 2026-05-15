@@ -19,10 +19,15 @@ public class CodeGenerator implements Opcodes {
   private Map<String, byte[]> generatedClasses = new HashMap<>(); // On stocke le nom de la classe avec son code bianire
   private Map<String, String> globalVariablesTypes = new HashMap<>();
   private Map<String, String> localVariableTypes = new HashMap<>();
+  private String currentReturnTypeDesc = "I";
+  private Map<String, String> functionReturnTypes = new HashMap<>();
 
   public Map<String, byte[]> generate(Node root, String className) {
     this.generatedClasses.clear();
+    this.functionReturnTypes.clear();
     this.className = className;
+
+    preBrowse(root);
 
     this.classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES); // Compute_frames calcule la taille max de la pile et des variables globales
     // V1_8 est la version de Java
@@ -33,7 +38,6 @@ public class CodeGenerator implements Opcodes {
 
     classWriter.visitEnd();
     generatedClasses.put(className, classWriter.toByteArray()); // On stocke le résultat dans le dictionneaire
-
     return generatedClasses;
   }
 
@@ -46,6 +50,17 @@ public class CodeGenerator implements Opcodes {
     mv.visitInsn(RETURN);
     mv.visitMaxs(1, 1);
     mv.visitEnd();
+  }
+
+  private void preBrowse(Node node) {
+    if (node instanceof ProgramNode program) {
+      for (Node decl : program.getDeclarations()) {
+        if (decl instanceof FunctionNode fn) {
+          String retDesc = getDescriptor(fn.getRetType());
+          functionReturnTypes.put(fn.getName(), retDesc);
+        }
+      }
+    }
   }
 
   private void browse(Node node) {
@@ -80,13 +95,14 @@ public class CodeGenerator implements Opcodes {
     }
   }
 
-  private void generateFunction(FunctionNode node){
-    variableSlots.clear(); // On garantit que les variables locales ne gênent pas d'autres d'une autre méthode
+  private void generateFunction(FunctionNode node) {
+    variableSlots.clear();
     localVariableTypes.clear();
     nextSlot = 0;
     String name = node.getName();
 
     StringBuilder descBuilder = new StringBuilder("(");
+
     if (name.equals("main")) {
       descBuilder.append("[Ljava/lang/String;");
       variableSlots.put("args", nextSlot++);
@@ -95,25 +111,35 @@ public class CodeGenerator implements Opcodes {
         ParameterNode param = (ParameterNode) parameter;
         String typeDesc = getDescriptor(param.getType());
 
-        descBuilder.append(typeDesc); 
+        descBuilder.append(typeDesc);
         variableSlots.put(param.getName(), nextSlot);
         localVariableTypes.put(param.getName(), typeDesc);
         nextSlot++;
       }
     }
     descBuilder.append(")");
-    descBuilder.append(name.equals("main") ? "V" : "I");
 
-    MethodVisitor methodVisitor = classWriter.visitMethod(ACC_PUBLIC + ACC_STATIC, name, descBuilder.toString(), null, null);
-    methodVisitor.visitCode();
+    String returnTypeDesc = name.equals("main") ? "V" : getDescriptor(node.getRetType());
+    this.currentReturnTypeDesc = returnTypeDesc;
+
+    String fullDesc = descBuilder.toString() + returnTypeDesc;
+    MethodVisitor methodVisitor = classWriter.visitMethod(ACC_PUBLIC + ACC_STATIC, name, fullDesc, null, null);    methodVisitor.visitCode();
 
     generateStatement(node.getBody(), methodVisitor);
 
-    if (name.equals("main")) {
+    if (name.equals("main") || returnTypeDesc.equals("V")) {
       methodVisitor.visitInsn(RETURN);
     } else {
-      methodVisitor.visitInsn(ICONST_0);
-      methodVisitor.visitInsn(IRETURN);
+      if (returnTypeDesc.equals("F")) {
+        methodVisitor.visitInsn(FCONST_0);
+        methodVisitor.visitInsn(FRETURN);
+      } else if (returnTypeDesc.startsWith("L") || returnTypeDesc.startsWith("[")) {
+        methodVisitor.visitInsn(ACONST_NULL);
+        methodVisitor.visitInsn(ARETURN);
+      } else {
+        methodVisitor.visitInsn(ICONST_0);
+        methodVisitor.visitInsn(IRETURN);
+      }
     }
 
     methodVisitor.visitMaxs(0, 0);
@@ -204,7 +230,11 @@ public class CodeGenerator implements Opcodes {
     }
     else if (node instanceof ReturnNode) {
       generateExpression(((ReturnNode) node).getExpression(), mv);
-      mv.visitInsn(IRETURN);
+
+      if (currentReturnTypeDesc.equals("F")) mv.visitInsn(FRETURN);
+      else if (currentReturnTypeDesc.startsWith("L") || currentReturnTypeDesc.startsWith("[")) mv.visitInsn(ARETURN);
+      else if (currentReturnTypeDesc.equals("V")) mv.visitInsn(RETURN);
+      else mv.visitInsn(IRETURN);
     } else if (node instanceof ForNode forNode) {
       Label startLabel = new Label();
       Label endLabel = new Label();
@@ -263,7 +293,10 @@ public class CodeGenerator implements Opcodes {
         generateExpression(arg, mv);
         descBuilder.append("I");
       }
-      descBuilder.append(")I");
+      descBuilder.append(")");
+
+      String returnTypeDesc = functionReturnTypes.getOrDefault(name, "I");
+      descBuilder.append(returnTypeDesc);
 
       mv.visitMethodInsn(INVOKESTATIC, this.className, name, descBuilder.toString(), false);
     }
@@ -387,6 +420,7 @@ public class CodeGenerator implements Opcodes {
       case "FLOAT": return "F";
       case "BOOL": return "Z";
       case "STRING": return "Ljava/lang/String;";
+      case "VOID":   return "V";
       default:
         return "L" + type + ";";
     }
