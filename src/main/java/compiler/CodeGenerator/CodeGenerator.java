@@ -366,18 +366,46 @@ public class CodeGenerator implements Opcodes {
         mv.visitFieldInsn(GETSTATIC, this.className, name, typeDescriptor);
       }
     }
+    else if (node instanceof ArrayNode arrayNode) {
+      generateExpression(arrayNode.getSize(), mv);
+
+      String baseType = arrayNode.getType();
+      String descriptor = getDescriptor(baseType);
+
+      if (descriptor.equals("I")) {
+        mv.visitIntInsn(NEWARRAY, T_INT);
+      } else if (descriptor.equals("F")) {
+        mv.visitIntInsn(NEWARRAY, T_FLOAT);
+      } else if (descriptor.equals("Z")) {
+        mv.visitIntInsn(NEWARRAY, T_BOOLEAN);
+      } else {
+        String internalName = descriptor;
+        if (descriptor.startsWith("L") && descriptor.endsWith(";")) {
+          internalName = descriptor.substring(1, descriptor.length() - 1);
+        }
+        mv.visitTypeInsn(ANEWARRAY, internalName);
+      }
+    }
     else if (node instanceof BinaryNode binaryNode) {
       generateExpression(binaryNode.getLeft(), mv);
       generateExpression(binaryNode.getRight(), mv);
 
+      boolean isFloat = isFloatExpression(binaryNode.getLeft()) || isFloatExpression(binaryNode.getRight());
+
       String op = binaryNode.getOperator();
       switch (op) {
-        case "+" -> mv.visitInsn(IADD);
-        case "-" -> mv.visitInsn(ISUB);
-        case "*" -> mv.visitInsn(IMUL);
-        case "/" -> mv.visitInsn(IDIV);
-        case "%" -> mv.visitInsn(IREM);
-        case "==", "!=", "<", ">", "<=", ">=", "=/=" -> generateComparison(op, mv);
+        case "+" -> mv.visitInsn(isFloat ? FADD : IADD);
+        case "-" -> mv.visitInsn(isFloat ? FSUB : ISUB);
+        case "*" -> mv.visitInsn(isFloat ? FMUL : IMUL);
+        case "/" -> mv.visitInsn(isFloat ? FDIV : IDIV);
+        case "%" -> mv.visitInsn(isFloat ? FREM : IREM);
+        case "==", "!=", "<", ">", "<=", ">=", "=/=" -> {
+          if (isFloat) {
+            generateFloatComparison(op, mv);
+          } else {
+            generateComparison(op, mv);
+          }
+        }
         default -> throw new UnsupportedOperationException("Opérateur non géré : " + op);
       }
     }
@@ -404,6 +432,22 @@ public class CodeGenerator implements Opcodes {
     }
   }
 
+  private boolean isFloatExpression(Node node) {
+    if (node instanceof FloatNode) return true;
+    if (node instanceof IdNode id) {
+      String type = localVariableTypes.get(id.getName());
+      if (type == null) type = globalVariablesTypes.get(id.getName());
+      return "F".equals(type);
+    }
+    if (node instanceof BinaryNode bin) {
+      return isFloatExpression(bin.getLeft()) || isFloatExpression(bin.getRight());
+    }
+    if (node instanceof FunctionCallNode call) {
+      return "F".equals(functionReturnTypes.get(call.getName()));
+    }
+    return false;
+  }
+
   private void generateComparison(String op, MethodVisitor mv) {
     Label trueLabel = new Label();
     Label endLabel = new Label();
@@ -425,6 +469,32 @@ public class CodeGenerator implements Opcodes {
     mv.visitLabel(endLabel);
   }
 
+
+  private void generateFloatComparison(String op, MethodVisitor mv) {
+    Label trueLabel = new Label();
+    Label endLabel = new Label();
+
+    mv.visitInsn(FCMPL);
+
+    int jumpOpcode = switch (op) {
+      case "==" -> IFEQ;
+      case "!=", "=/=" -> IFNE;
+      case "<"  -> IFLT;
+      case ">"  -> IFGT;
+      case "<=" -> IFLE;
+      case ">=" -> IFGE;
+      default -> throw new UnsupportedOperationException("Opérateur de comparaison inconnu : " + op);
+    };
+
+    mv.visitJumpInsn(jumpOpcode, trueLabel);
+    mv.visitInsn(ICONST_0);
+    mv.visitJumpInsn(GOTO, endLabel);
+
+    mv.visitLabel(trueLabel);
+    mv.visitInsn(ICONST_1);
+
+    mv.visitLabel(endLabel);
+  }
 
   private void generateGlobalVariable(DeclarationNode node) {
     String name = node.getName();
